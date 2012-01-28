@@ -9,6 +9,7 @@
 
 typedef struct {
     int x, y;
+    int dead;
 } TPlayer;
 
 extern int scene[Y_BLOCKS][X_BLOCKS];
@@ -21,5 +22,7 @@ void scene_update(void);
 
 int get_key(void);
 void players_move(int);
+
+int game_check_end(void);
 
 #endif

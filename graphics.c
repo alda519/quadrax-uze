@@ -17,8 +17,8 @@ int graphics_init(void)
 
 int block_draw(SDL_Surface *screen, int x, int y, int type)
 {
-    SDL_Rect from = {.x = type*20, .y = 0, .w = 20, .h = 20};
-    SDL_Rect to   = {.x = x*20, .y = y*20, .w = 20, .h = 20};
+    SDL_Rect from = {.x = type*BLOCK_SIZE, .y = 0, .w = BLOCK_SIZE, .h = BLOCK_SIZE};
+    SDL_Rect to   = {.x = x*BLOCK_SIZE, .y = y*BLOCK_SIZE, .w = BLOCK_SIZE, .h = BLOCK_SIZE};
     SDL_BlitSurface(blocks_images, &from, screen, &to);
 //    SDL_UpdateRect(screen, snake.x*TILE,snake.y*TILE,TILE,TILE);
     return 0;

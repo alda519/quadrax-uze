@@ -5,7 +5,7 @@
 #ifndef QUADRAX_H
 #define QUADRAX_H
 
-#define BLOCK_SIZE 20
+#define BLOCK_SIZE 32
 
 #define X_BLOCKS 40
 #define Y_BLOCKS 25

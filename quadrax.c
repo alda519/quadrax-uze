@@ -30,14 +30,15 @@ int main(int argc, char *argv[])
     scene_reset();
 
     int action = 0;
-    do {
+    while(game_check_end() && action != -1) {
         action = get_key();
-        SDL_Delay(10);
-        scene_draw(screen);
-
         players_move(action);
+        scene_draw(screen);
+        SDL_Delay(10);
+    }
 
-    } while(action >= 0);
+    
+    SDL_Delay(500);
 
     SDL_Quit();
     return 0;
