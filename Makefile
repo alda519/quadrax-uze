@@ -16,3 +16,6 @@ dep.list:
 	$(CC) -MM *.c > dep.list
 
 -include dep.list
+
+clean:
+	-rm *.o dep.list $(PROJECT)
