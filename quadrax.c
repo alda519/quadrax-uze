@@ -8,6 +8,7 @@
 
 #include "quadrax.h"
 #include "game.h"
+#include "graphics.h"
 
 
 int main(int argc, char *argv[])
@@ -33,7 +34,10 @@ int main(int argc, char *argv[])
     while(game_check_end() && action != -1) {
         action = get_key();
         players_move(action);
+        check_fall(PLAYER_RED);
+        check_fall(PLAYER_BLUE);
         scene_draw(screen);
+        
         SDL_Delay(10);
     }
 

@@ -7,12 +7,26 @@
 
 #include "quadrax.h"
 
+#define PLAYER_RED 0
+#define PLAYER_BLUE 1
+
 typedef struct {
     int x, y;
     int dead;
 } TPlayer;
 
-extern int scene[Y_BLOCKS][X_BLOCKS];
+enum {
+    MOVE_LEFT = 1,
+    MOVE_RIGHT,
+    MOVE_UP,
+    MOVE_DOWN,
+    MOVE_UPRIGHT,
+    MOVE_UPLEFT,
+    MOVE_DOWNRIGHT,
+    MOVE_DOWNLEFT,
+};
+
+extern int scene[X_BLOCKS][Y_BLOCKS];
 extern TPlayer players[2];
 extern int current_player;
 
@@ -24,5 +38,8 @@ int get_key(void);
 void players_move(int);
 
 int game_check_end(void);
+
+
+void check_fall(int);
 
 #endif

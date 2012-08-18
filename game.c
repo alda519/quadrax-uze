@@ -5,10 +5,19 @@
 #include <SDL/SDL.h>
 
 #include "game.h"
+#include "quadrax.h"
 
-int scene[Y_BLOCKS][X_BLOCKS];
+int scene[X_BLOCKS][Y_BLOCKS];
+// TODO: neexistuje current player, oni musi hrat soucasne!
 int current_player = 0;
 TPlayer players[2];
+
+
+// makro rika, jestli je na pozici [X][Y] volne pole
+#define FREE_BLOCK(X, Y) (scene[players[current_player]. X][players[current_player]. Y] == BLANK)
+
+// pro kazdeho hrace je ulozen pocet poli, co spadl
+int fall[2] = {0, 0};
 
 
 /*
@@ -25,15 +34,21 @@ void scene_reset(void)
     players[1].dead = 0;
 
     // TODO: struktura levelu by se mela cist z dataku nejakeho
-    for(int i = 0; i < Y_BLOCKS; ++i)
-        for(int j = 0; j < X_BLOCKS; ++j)
-            if(i == 0 || i == Y_BLOCKS - 1 || j == 0 || j == X_BLOCKS - 1)
-                scene[i][j] = WALL;
+    for(int x = 0; x < X_BLOCKS; ++x)
+        for(int y = 0; y < Y_BLOCKS; ++y)
+            if(x == 0 || x == X_BLOCKS - 1 || y == 0 || y == Y_BLOCKS - 1)
+                scene[x][y] = WALL;
             else
-                scene[i][j] = BLANK;
+                scene[x][y] = BLANK;
+
+    // schody
+    for(int x = 20; x < 30; ++x)
+        scene[x][30+20-x] = WALL;
+
+    scene[2][27] = WALL;
 
     // TODO: stejne tak pozice cile
-    scene[24][5] = scene[24][6] = FINISH;
+    scene[5][29] = scene[6][29] = FINISH;
 }
 
 
@@ -54,14 +69,23 @@ int get_key(void)
         return -1;
     if(keys[SDLK_ESCAPE])
         return -1;
+    if(keys[SDLK_RIGHT] && keys[SDLK_UP])
+        return MOVE_UPRIGHT;
+    if(keys[SDLK_LEFT] && keys[SDLK_UP])
+        return MOVE_UPLEFT;
+    if(keys[SDLK_RIGHT] && keys[SDLK_DOWN])
+        return MOVE_DOWNRIGHT;
+    if(keys[SDLK_LEFT] && keys[SDLK_DOWN])
+        return MOVE_DOWNLEFT;
     if(keys[SDLK_RIGHT])
-        return 1;
+        return MOVE_RIGHT;
     if(keys[SDLK_LEFT])
-        return 3;
+        return MOVE_LEFT;
     if(keys[SDLK_UP])
-        return 4; 
+        return MOVE_UP; 
     if(keys[SDLK_DOWN])
-        return 2;
+        return MOVE_DOWN;
+    // TODO: promyslet poradi v jakem se to vyhodnocuje!
 
     if(ev && keys[SDLK_LALT])
         current_player = (current_player + 1) % 2;
@@ -75,22 +99,34 @@ int get_key(void)
  */
 void players_move(int action)
 {
+    // TODO:
+    // chodit se da, jen kdyz je misto i na vysku
+    // udelat chozeni i do schodu
+
+    if(fall[current_player])
+        return;
+
     switch(action) {
-    case 1:
-        if(scene[players[current_player].y][players[current_player].x + 1] == BLANK)
+    // TODO: predelat, chodi se jen vlevo, vpravo
+//    case MOVE_DOWN:
+//        if(scene[players[current_player].x][players[current_player].y+1] == BLANK)
+//            players[current_player].y += 1;
+//        break;
+    case MOVE_RIGHT:
+        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1))
             players[current_player].x += 1;
-        break;
-    case 2:
-        if(scene[players[current_player].y + 1][players[current_player].x] == BLANK)
-            players[current_player].y += 1;
-        break;
-    case 3:
-        if(scene[players[current_player].y][players[current_player].x - 1] == BLANK)
-            players[current_player].x -= 1;
-        break;
-    case 4:
-        if(scene[players[current_player].y - 1][players[current_player].x] == BLANK)
+        else if(FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x+1, y-2)) {
+            players[current_player].x += 1;
             players[current_player].y -= 1;
+        }
+        break;
+//    case MOVE_UP:
+//        if(scene[players[current_player].x][players[current_player].y-1] == BLANK)
+//            players[current_player].y -= 1;
+//        break;
+    case MOVE_LEFT:
+        if(scene[players[current_player].x-1][players[current_player].y] == BLANK && scene[players[current_player].x-1][players[current_player].y-1] == BLANK)
+            players[current_player].x -= 1;
         break;
     default:
         break;
@@ -104,7 +140,33 @@ void players_move(int action)
  */
 int game_check_end(void)
 {
-    return !(scene[players[0].y+1][players[0].x] == FINISH &&
-        scene[players[1].y+1][players[1].x] == FINISH ||
+    // TODO: tohle prepsat, vypada to hnusne!
+    return !(
+        (scene[players[0].x][players[0].y+1] == FINISH
+                            &&
+         scene[players[1].x][players[1].y+1] == FINISH)
+                            ||
         players[0].dead || players[1].dead);
+}
+
+
+
+/*
+ * pokud pod hracem neni zem, tak spadne
+ * pokud spadne moc, umre
+ */
+void check_fall(int player)
+{
+    // pokud pod hracem neni podlaha
+    if(scene[players[player].x][players[player].y+1] == BLANK) {
+        fall[player] += 1;
+        players[player].y += 1;
+    } else {
+        // pokud spadl moc, tak umrel
+        if(fall[player] > 3) {
+            printf("UMREL JSI !!!\n");
+        }
+        // na pevne zemi se resetuje pocitadlo padu
+        fall[player] = 0;
+    }
 }
