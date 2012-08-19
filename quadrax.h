@@ -25,6 +25,7 @@ enum {
     PLAYER1 = 2,
     PLAYER2 = 3,
     FINISH = 4,
+    BOULDER = 5,
 } mapelements;
 
 #endif

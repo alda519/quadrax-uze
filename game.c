@@ -41,10 +41,15 @@ void scene_reset(void)
             else
                 scene[x][y] = BLANK;
 
-    // schody
-    for(int x = 20; x < 30; ++x)
+    // schody a plosinka
+    for(int x = 20; x < 30; ++x) {
         scene[x][30+20-x] = WALL;
+        scene[x-1][18] = WALL;
+    }
+    scene[30][19] = WALL;
+    scene[29][17] = WALL;
 
+    // prolizacka
     scene[2][27] = WALL;
     scene[3][25] = WALL;
     scene[2][23] = WALL;
@@ -54,6 +59,11 @@ void scene_reset(void)
     scene[2][15] = WALL;
     scene[3][13] = WALL;
     scene[2][11] = WALL;
+
+    scene[20][17] = BOULDER;
+    scene[20][16] = BOULDER;
+    scene[21][17] = BOULDER;
+    scene[21][16] = BOULDER;
 
     // TODO: stejne tak pozice cile
     scene[5][29] = scene[6][29] = FINISH;
@@ -73,6 +83,11 @@ int get_key(void)
 //        return 0;
 
     keys = SDL_GetKeyState(NULL);
+
+    // NOTE: to ev je tam proto, aby to neprepinalo porad, ale jen pri udalosti
+    if(ev && keys[SDLK_LALT])
+        current_player = (current_player + 1) % 2;
+
     if(event.type == SDL_QUIT || (keys[SDLK_F4] && keys[SDLK_LALT]))
         return -1;
     if(keys[SDLK_ESCAPE])
@@ -95,8 +110,6 @@ int get_key(void)
         return MOVE_DOWN;
     // TODO: promyslet poradi v jakem se to vyhodnocuje!
 
-    if(ev && keys[SDLK_LALT])
-        current_player = (current_player + 1) % 2;
 
     return 0;
 }
@@ -120,7 +133,7 @@ void players_move(int action)
         if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && !(FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1, y+3)))
             players[current_player].x += 1;
         // krok do schodu s kontrolou existence schodu
-        else if(FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x+1, y-2) && !FREE_BLOCK(x+1,y)) {
+        else if(FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x+1, y-2) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x+1,y)) {
             players[current_player].x += 1;
             players[current_player].y -= 1;
         }
@@ -130,7 +143,7 @@ void players_move(int action)
         if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y-1) && !(FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1, y+3)))
             players[current_player].x -= 1;
         // krok do schodu doleva s kontrolou existence schodu
-        else if(FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x-1, y-2) && !FREE_BLOCK(x-1,y)) {
+        else if(FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x-1, y-2) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x-1,y)) {
             players[current_player].x -= 1;
             players[current_player].y -= 1;
         }

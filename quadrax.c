@@ -41,9 +41,6 @@ int main(int argc, char *argv[])
         SDL_Delay(50);
     }
 
-    
-    SDL_Delay(500);
-
     SDL_Quit();
     return 0;
 }
