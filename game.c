@@ -46,6 +46,14 @@ void scene_reset(void)
         scene[x][30+20-x] = WALL;
 
     scene[2][27] = WALL;
+    scene[3][25] = WALL;
+    scene[2][23] = WALL;
+    scene[3][21] = WALL;
+    scene[2][19] = WALL;
+    scene[3][17] = WALL;
+    scene[2][15] = WALL;
+    scene[3][13] = WALL;
+    scene[2][11] = WALL;
 
     // TODO: stejne tak pozice cile
     scene[5][29] = scene[6][29] = FINISH;
@@ -102,6 +110,8 @@ void players_move(int action)
     // TODO:
     // chodit se da, jen kdyz je misto i na vysku
     // udelat chozeni i do schodu
+    // ochrana proti padu pri chuzi dolu
+    // chuze ze schodu je pomala?
 
     if(fall[current_player])
         return;
@@ -113,9 +123,11 @@ void players_move(int action)
 //            players[current_player].y += 1;
 //        break;
     case MOVE_RIGHT:
-        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1))
+        // krok doprava s ochranou padu z vyzky
+        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && !(FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1, y+3)))
             players[current_player].x += 1;
-        else if(FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x+1, y-2)) {
+        // krok do schodu s kontrolou existence schodu
+        else if(FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x+1, y-2) && !FREE_BLOCK(x+1,y)) {
             players[current_player].x += 1;
             players[current_player].y -= 1;
         }
@@ -125,9 +137,47 @@ void players_move(int action)
 //            players[current_player].y -= 1;
 //        break;
     case MOVE_LEFT:
-        if(scene[players[current_player].x-1][players[current_player].y] == BLANK && scene[players[current_player].x-1][players[current_player].y-1] == BLANK)
+        // krok doleva s ochranou proti padu z vysky
+        if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y-1) && !(FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1, y+3)))
             players[current_player].x -= 1;
+        // krok do schodu doleva s kontrolou existence schodu
+        else if(FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x-1, y-2) && !FREE_BLOCK(x-1,y)) {
+            players[current_player].x -= 1;
+            players[current_player].y -= 1;
+        }
         break;
+
+    case MOVE_UPLEFT:
+        if(FREE_BLOCK(x-1,y-2) && FREE_BLOCK(x-1, y-3) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x-1,y-1)) {
+            players[current_player].x -= 1;
+            players[current_player].y -= 2;
+        } else {
+            players_move(MOVE_LEFT);
+        }
+        break;
+    case MOVE_UPRIGHT:
+        if(FREE_BLOCK(x+1,y-2) && FREE_BLOCK(x+1, y-3) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x+1,y-1)) {
+            players[current_player].x += 1;
+            players[current_player].y -= 2;
+        } else {
+            players_move(MOVE_RIGHT);
+        }
+        break;
+    case MOVE_DOWNLEFT:
+        if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y)) {
+            players[current_player].x -= 1;
+            players[current_player].y += 2;
+        } else {
+            players_move(MOVE_LEFT);
+        }
+        break;
+    case MOVE_DOWNRIGHT:
+        if(FREE_BLOCK(x+1, y+1) && FREE_BLOCK(x+1, y+2) && FREE_BLOCK(x+1, y)) {
+            players[current_player].x += 1;
+            players[current_player].y += 2;
+        } else {
+            players_move(MOVE_RIGHT);
+        }
     default:
         break;
     }
@@ -164,7 +214,7 @@ void check_fall(int player)
     } else {
         // pokud spadl moc, tak umrel
         if(fall[player] > 3) {
-            printf("UMREL JSI !!!\n");
+            printf("UMREL JSI !!!  [%d]\n", fall[player]);
         }
         // na pevne zemi se resetuje pocitadlo padu
         fall[player] = 0;

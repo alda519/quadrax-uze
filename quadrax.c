@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         check_fall(PLAYER_BLUE);
         scene_draw(screen);
         
-        SDL_Delay(10);
+        SDL_Delay(50);
     }
 
     
