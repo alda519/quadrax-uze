@@ -108,20 +108,13 @@ int get_key(void)
 void players_move(int action)
 {
     // TODO:
-    // chodit se da, jen kdyz je misto i na vysku
-    // udelat chozeni i do schodu
-    // ochrana proti padu pri chuzi dolu
     // chuze ze schodu je pomala?
 
+    // pokud hrac pada, tak se nemuze hybat
     if(fall[current_player])
         return;
 
     switch(action) {
-    // TODO: predelat, chodi se jen vlevo, vpravo
-//    case MOVE_DOWN:
-//        if(scene[players[current_player].x][players[current_player].y+1] == BLANK)
-//            players[current_player].y += 1;
-//        break;
     case MOVE_RIGHT:
         // krok doprava s ochranou padu z vyzky
         if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && !(FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1, y+3)))
@@ -132,10 +125,6 @@ void players_move(int action)
             players[current_player].y -= 1;
         }
         break;
-//    case MOVE_UP:
-//        if(scene[players[current_player].x][players[current_player].y-1] == BLANK)
-//            players[current_player].y -= 1;
-//        break;
     case MOVE_LEFT:
         // krok doleva s ochranou proti padu z vysky
         if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y-1) && !(FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1, y+3)))
@@ -148,36 +137,45 @@ void players_move(int action)
         break;
 
     case MOVE_UPLEFT:
+        // vyleze na kosku vlevo
         if(FREE_BLOCK(x-1,y-2) && FREE_BLOCK(x-1, y-3) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x-1,y-1)) {
             players[current_player].x -= 1;
             players[current_player].y -= 2;
-        } else {
+        } else { // pokud to nejde nahoru, tak zkusi jit aspon jen vlevo
             players_move(MOVE_LEFT);
         }
         break;
     case MOVE_UPRIGHT:
+        // vyleze na kostku vpravo
         if(FREE_BLOCK(x+1,y-2) && FREE_BLOCK(x+1, y-3) && FREE_BLOCK(x, y-2) && !FREE_BLOCK(x+1,y-1)) {
             players[current_player].x += 1;
             players[current_player].y -= 2;
-        } else {
+        } else { // pokud to nejde nahoru, tak zkusi jit aspon jen vpravo
             players_move(MOVE_RIGHT);
         }
         break;
     case MOVE_DOWNLEFT:
-        if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y)) {
+        // podleze vlevo dolu, dava pozor, aby nespadl
+        if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y) && ! FREE_BLOCK(x-1, y+3)) {
             players[current_player].x -= 1;
             players[current_player].y += 2;
+        // pripadne jde jen vlevo, kdyz to nejde dolu
         } else {
             players_move(MOVE_LEFT);
         }
         break;
     case MOVE_DOWNRIGHT:
-        if(FREE_BLOCK(x+1, y+1) && FREE_BLOCK(x+1, y+2) && FREE_BLOCK(x+1, y)) {
+        // podleze vpravo dolu, dava pozor, aby nespadl
+        if(FREE_BLOCK(x+1, y+1) && FREE_BLOCK(x+1, y+2) && FREE_BLOCK(x+1, y) && ! FREE_BLOCK(x+1, y+3)) {
             players[current_player].x += 1;
             players[current_player].y += 2;
+        // pripadne jde jen vpravo, kdyz to nejde dolu
         } else {
             players_move(MOVE_RIGHT);
         }
+// TODO: chuze nahoru a dolu jen po zebriku nebo necem podobnem
+//    case MOVE_UP:
+//    case MOVE_DOWN:
     default:
         break;
     }
