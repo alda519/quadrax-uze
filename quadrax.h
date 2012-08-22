@@ -8,7 +8,7 @@
 
 #define BLOCK_SIZE 16
 
-#define X_BLOCKS 45
+#define X_BLOCKS 40
 #define Y_BLOCKS 30
 
 #define WIDTH (X_BLOCKS * BLOCK_SIZE)
@@ -27,5 +27,11 @@ enum {
     FINISH = 4,
     BOULDER = 5,
 } mapelements;
+
+enum {
+    SOLID = 0,
+    FREE = 1,
+} maptypes;
+
 
 #endif

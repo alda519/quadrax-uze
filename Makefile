@@ -9,7 +9,7 @@ LIBS=-lSDL
 
 build: dep.list $(PROJECT)
 
-$(PROJECT): quadrax.o game.o graphics.o
+$(PROJECT): quadrax.o game.o graphics.o boulder.o
 	$(CC) $(CFLAGS) $(LIBS) -o $@  $^
 
 dep.list:

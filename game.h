@@ -10,6 +10,9 @@
 #define PLAYER_RED 0
 #define PLAYER_BLUE 1
 
+// makro rika, jestli je na pozici [X][Y] volne pole
+#define FREE_BLOCK(X, Y) (scene[X][Y].type)
+
 typedef struct {
     int x, y;
     int dead;
@@ -26,7 +29,17 @@ enum {
     MOVE_DOWNLEFT,
 };
 
-extern int scene[X_BLOCKS][Y_BLOCKS];
+/**
+ * structura popisujici jedno policko herni mapy
+ * type 0 = volno, 1 = zed/balvan/cokoliv_cim_nejde_chodit
+ * extra = presne urceni typu elementu
+ */
+typedef struct {
+    unsigned char type : 1;
+    unsigned char extra : 7;
+} t_block;
+
+extern t_block scene[X_BLOCKS][Y_BLOCKS];
 extern TPlayer players[2];
 extern int current_player;
 

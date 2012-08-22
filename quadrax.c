@@ -33,9 +33,10 @@ int main(int argc, char *argv[])
     int action = 0;
     while(game_check_end() && action != -1) {
         action = get_key();
-        players_move(action);
         check_fall(PLAYER_RED);
         check_fall(PLAYER_BLUE);
+        players_move(action);
+        boulders_fall(PLAYER_BLUE);
         scene_draw(screen);
         
         SDL_Delay(50);
