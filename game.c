@@ -148,6 +148,9 @@ void players_move(int action)
             players[current_player].y -= 1;
         // popotlaceni balvanu
         } else if(FREE_BLOCK(x+3, y) && FREE_BLOCK(x+3, y+1)) {
+            // nejde prejet druheho
+            if(players[(current_player+1)%2].x == x+3 && (players[(current_player+1)%2].y == y || players[(current_player+1)%2].y == y+1))
+                break;
             int b = find_boulder(players[current_player].x+1, players[current_player].y);
             if(b) {
                 boulders[b-1].x += 1;
@@ -169,6 +172,9 @@ void players_move(int action)
             players[current_player].y -= 1;
         // posun balvanu
         } else if(FREE_BLOCK(x-3, y) && FREE_BLOCK(x-3, y+1)) {
+            // nejde prejet druheho
+            if(players[(current_player+1)%2].x == x-3 && (players[(current_player+1)%2].y == y || players[(current_player+1)%2].y == y+1))
+                break;
             int b = find_boulder(players[current_player].x-2, players[current_player].y);
             if(b) {
                 boulders[b-1].x -= 1;
