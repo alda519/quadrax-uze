@@ -23,10 +23,12 @@ int fall[2] = {0, 0};
  * vykresli zakladni prvky do sceny
  * ozivi hrace, nastavi jim vychozi pozice
  */
-void scene_reset(void)
+void scene_reset(int level)
 {
+    char levelname[] = "level00.map";
+    levelname[6] += level;
 
-    FILE *map = fopen("level00.map", "r");
+    FILE *map = fopen(levelname, "r");
     if(map == NULL) {
         perror("fopen");
         exit(1);
@@ -140,7 +142,7 @@ void players_move(int action)
     switch(action) {
     case MOVE_RIGHT:
         // krok doprava s ochranou padu z vyzky
-        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x-1, y+5)))
+        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)))
             players[current_player].x += 1;
         // krok do schodu s kontrolou existence schodu
         else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1)) {
