@@ -19,6 +19,8 @@
 #define BLOCK_TOP 0
 #define BLOCK_BOTTOM 1
 
+#define LEVELS 3
+
 enum {
     BLANK = 0,
     WALL = 1,

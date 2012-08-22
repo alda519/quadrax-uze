@@ -51,7 +51,7 @@ extern t_block scene[X_BLOCKS][Y_BLOCKS];
 extern TPlayer players[2];
 extern int current_player;
 
-void scene_reset(void);
+void scene_reset(int);
 
 void scene_update(void);
 

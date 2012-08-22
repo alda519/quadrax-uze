@@ -31,12 +31,14 @@ int main(int argc, char *argv[])
 
 
     int action;
+    int level = 0;
     do {
-        scene_reset();
+        scene_reset(level);
 
         action = get_key();
+        int gamestat;
 
-        while(game_check_end() == GAME_CONTINUE && action >= 0) {
+        while((gamestat = game_check_end()) == GAME_CONTINUE && action >= 0) {
             action = get_key();
 
             check_fall(PLAYER_RED);
@@ -47,7 +49,9 @@ int main(int argc, char *argv[])
 
             SDL_Delay(50);
         }
-    } while(action != GAME_END);
+        if(gamestat == GAME_NEXTLEVEL)
+            level += 1;
+    } while(action != GAME_END && level < LEVELS);
 
     SDL_Quit();
     return 0;
