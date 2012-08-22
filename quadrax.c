@@ -28,19 +28,26 @@ int main(int argc, char *argv[])
     SDL_WM_SetCaption("Quadrax BETA", NULL);
 
     graphics_init();
-    scene_reset();
 
-    int action = 0;
-    while(game_check_end() && action != -1) {
+
+    int action;
+    do {
+        scene_reset();
+
         action = get_key();
-        check_fall(PLAYER_RED);
-        check_fall(PLAYER_BLUE);
-        players_move(action);
-        boulders_fall(PLAYER_BLUE);
-        scene_draw(screen);
-        
-        SDL_Delay(50);
-    }
+
+        while(game_check_end() == GAME_CONTINUE && action >= 0) {
+            action = get_key();
+
+            check_fall(PLAYER_RED);
+            check_fall(PLAYER_BLUE);
+            players_move(action);
+            boulders_fall(PLAYER_BLUE);
+            scene_draw(screen);
+
+            SDL_Delay(50);
+        }
+    } while(action != GAME_END);
 
     SDL_Quit();
     return 0;

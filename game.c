@@ -69,6 +69,8 @@ void scene_reset(void)
             }
         }
     }
+    players[0].dead = 0;
+    players[1].dead = 0;
     fclose(map);
 }
 
@@ -92,9 +94,9 @@ int get_key(void)
         current_player = (current_player + 1) % 2;
 
     if(event.type == SDL_QUIT || (keys[SDLK_F4] && keys[SDLK_LALT]))
-        return -1;
+        return GAME_END;
     if(keys[SDLK_ESCAPE])
-        return -1;
+        return GAME_RESET;
     if(keys[SDLK_RIGHT] && keys[SDLK_UP])
         return MOVE_UPRIGHT;
     if(keys[SDLK_LEFT] && keys[SDLK_UP])
@@ -232,13 +234,11 @@ void players_move(int action)
  */
 int game_check_end(void)
 {
-    // TODO: tohle prepsat, vypada to hnusne!
-    return !(
-        (scene[players[0].x][players[0].y+1].extra == FINISH
-                            &&
-         scene[players[1].x][players[1].y+1].extra == FINISH)
-                            ||
-        players[0].dead || players[1].dead);
+    if(scene[players[0].x][players[0].y+2].extra == FINISH && scene[players[1].x][players[1].y+2].extra == FINISH)
+        return GAME_NEXTLEVEL;
+    if(players[0].dead || players[1].dead)
+        return GAME_RESET;
+    return GAME_CONTINUE;
 }
 
 
@@ -257,6 +257,7 @@ void check_fall(int player)
         // pokud spadl moc, tak umrel
         if(fall[player] > 3) {
             printf("UMREL JSI !!!  [%d]\n", fall[player]);
+            players[player].dead = 1;
         }
         // na pevne zemi se resetuje pocitadlo padu
         fall[player] = 0;

@@ -29,6 +29,14 @@ enum {
     MOVE_DOWNLEFT,
 };
 
+
+enum {
+    GAME_CONTINUE,
+    GAME_NEXTLEVEL = -1,
+    GAME_RESET = -2,
+    GAME_END = -3,
+} gamestatus;
+
 /**
  * structura popisujici jedno policko herni mapy
  * type 0 = volno, 1 = zed/balvan/cokoliv_cim_nejde_chodit
