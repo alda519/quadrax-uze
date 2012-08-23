@@ -46,6 +46,8 @@ void scene_reset(int level)
                     players[c-'1'].y = y;
                     scene[x][y].type = FREE;
                     scene[x][y+1].type = FREE;
+                    scene[x][y].extra = BLANK;
+                    scene[x][y+1].extra = BLANK;
                     break;
                 case '.':
                     scene[x][y].type = FREE;

@@ -29,6 +29,11 @@ int new_boulder(int x, int y) {
         scene[x+1][y].type = SOLID;
         scene[x+1][y+1].type = SOLID;
 
+        scene[x][y].extra = BLANK;
+        scene[x][y+1].extra = BLANK;
+        scene[x+1][y].extra = BLANK;
+        scene[x+1][y+1].extra = BLANK;
+
         return 1;
     } else {
         return 0;
