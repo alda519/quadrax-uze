@@ -3,13 +3,13 @@ Quadrax for uzebox
 
 Testing version using SDL.
 
-Real uzebox version comming soon.
+Real uzebox version comming soon. Now you can try demo https://github.com/downloads/alda519/quadrax-uze/Quadrax.hex
 
-http://belogic.com/uzebox/index.asp
+Do not forget to visit uzebox home page http://belogic.com/uzebox/index.asp
 
 
-Pro fandy Quadraxu
-------------------
+For fans of Quadrax
+-------------------
 
 http://www.worldofspectrum.org/infoseekid.cgi?id=0009403
 
