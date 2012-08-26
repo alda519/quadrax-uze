@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<gfx-xform version="1">
+    <input file="../data/tiles.png" type="png" tile-width="6" tile-height="8" width="60" height="64" />
+    <output file="../data/tiles.inc">
+
+    <tiles var-name="quadTiles"/>
+
+    <maps pointers-size="8">
+
+    <map var-name="map_boulder" left="4" top="0" width="2" height="2"/>
+    <map var-name="map_finish" left="0" top="1" width="2" height="1"/> 
+
+    <!-- Elevator -->
+    <map var-name="map_elevator_t" left="8" top="0" width="2" height="1"/> 
+    <map var-name="map_elevator_b" left="8" top="1" width="2" height="1"/> 
+
+    <!-- Players fron view -->
+    <map var-name="map_playerBlue" left="2" top="0" width="1" height="2"/>
+    <map var-name="map_playerRed" left="3" top="0" width="1" height="2"/>
+    
+    <!-- Blue Player walk right -->
+    <map var-name="map_playerBlue_m1r" left="0" top="2" width="2" height="2"/>
+    <map var-name="map_playerBlue_m2r" left="2" top="2" width="1" height="2"/>
+    <map var-name="map_playerBlue_m3r" left="3" top="2" width="2" height="2"/>
+    
+    <!-- Blue Player walk left -->
+    <map var-name="map_playerBlue_m1l" left="5" top="2" width="2" height="2"/>
+    <map var-name="map_playerBlue_m2l" left="7" top="2" width="1" height="2"/>
+    <map var-name="map_playerBlue_m3l" left="8" top="2" width="2" height="2"/>
+    
+    <!-- Red Player walk right -->
+    <map var-name="map_playerRed_m1r" left="0" top="4" width="2" height="2"/>
+    <map var-name="map_playerRed_m2r" left="2" top="4" width="1" height="2"/>
+    <map var-name="map_playerRed_m3r" left="3" top="4" width="2" height="2"/>
+    
+    <!-- Red Player walk left -->
+    <map var-name="map_playerRed_m1l" left="5" top="4" width="2" height="2"/>
+    <map var-name="map_playerRed_m2l" left="7" top="4" width="1" height="2"/>
+    <map var-name="map_playerRed_m3l" left="8" top="4" width="2" height="2"/>
+
+    </maps>
+    </output>
+</gfx-xform>

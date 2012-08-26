@@ -7,6 +7,14 @@ Real uzebox version comming soon. Now you can try demo https://github.com/downlo
 
 Do not forget to visit uzebox home page http://belogic.com/uzebox/index.asp
 
+Controlls
+---------
+
+- arrows - move
+- select - back to menu
+- start - restart level
+- A - swap controllers (singleplayer support)
+
 
 For fans of Quadrax
 -------------------

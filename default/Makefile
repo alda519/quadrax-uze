@@ -113,3 +113,5 @@ clean:
 ## Other dependencies
 -include $(shell mkdir dep 2>/dev/null) $(wildcard dep/*)
 
+../data/tiles.inc: ../data/tiles.png ../data/tiles.xml
+	bin/gconvert ../data/tiles.xml
