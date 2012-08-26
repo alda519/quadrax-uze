@@ -15,7 +15,7 @@ KERNEL_DIR = kernel
 KERNEL_OPTIONS  = -DVIDEO_MODE=5 -DINTRO_LOGO=0
 #-DCENTER_ADJUSTMENT=-12 
 
-UZEBIN_DIR = bin
+UZEBIN_DIR = bin/
 
 ## Options common to compile, link and assembly rules
 COMMON = -mmcu=$(MCU)
@@ -56,7 +56,7 @@ LINKONLYOBJECTS =
 INCLUDES = -I"$(KERNEL_DIR)" 
 
 ## Build
-all: $(TARGET) $(GAME).hex $(GAME).eep $(GAME).lss $(GAME).uze size
+all: ../data/tiles.inc $(TARGET) $(GAME).hex $(GAME).eep $(GAME).lss $(GAME).uze size
 
 ## Compile Kernel files
 uzeboxVideoEngineCore.o: $(KERNEL_DIR)/uzeboxVideoEngineCore.s
@@ -92,7 +92,7 @@ $(TARGET): $(OBJECTS)
 	avr-objdump -h -S $< > $@
 
 %.uze: $(TARGET)
-	-$(UZEBIN_DIR)/packrom $(GAME).hex $@ $(INFO)
+	-$(UZEBIN_DIR)packrom $(GAME).hex $@ $(INFO)
 
 UNAME := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 AVRSIZEFLAGS := -A ${TARGET}
@@ -114,4 +114,4 @@ clean:
 -include $(shell mkdir dep 2>/dev/null) $(wildcard dep/*)
 
 ../data/tiles.inc: ../data/tiles.png ../data/tiles.xml
-	bin/gconvert ../data/tiles.xml
+	$(UZEBIN_DIR)gconvert ../data/tiles.xml
