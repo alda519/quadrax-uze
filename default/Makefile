@@ -12,8 +12,7 @@ INFO=../gameinfo.properties
 
 ## Kernel settings
 KERNEL_DIR = kernel
-KERNEL_OPTIONS  = -DVIDEO_MODE=5
-#-DINTRO_LOGO=0
+KERNEL_OPTIONS  = -DVIDEO_MODE=5 -DINTRO_LOGO=0
 #-DCENTER_ADJUSTMENT=-12 
 
 UZEBIN_DIR = bin
