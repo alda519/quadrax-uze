@@ -88,17 +88,6 @@ int new_boulder(int x, int y) {
     }
 }
 
-/**
- * Smaze balvan
- */
-int del_boulder(int i) {
-    if(boulders_cnt) {
-        boulders[i] = boulders[boulders_cnt];
-        boulders_cnt -= 1;
-    }
-    return 0;
-}
-
 
 /**
  * Returns true if boulder is found on given coordinates
