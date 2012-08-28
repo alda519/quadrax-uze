@@ -6,10 +6,10 @@
 #include "data/fonts.pic.inc"
 #include "data/tiles.inc"
 
-#include "data/levels.h"
 
 #define WIDTH 40
 #define HEIGHT 28
+#include "data/levels.h"
 
 typedef union {
     unsigned char block;
@@ -54,6 +54,9 @@ player_t players[2];
 // is anyone dead?
 int dead = 0;
 
+// finish coordinates
+int finish_x, finish_y;
+
 #define MAX_BOULDERS 20
 
 // boulder description
@@ -65,6 +68,91 @@ typedef struct boulder_t {
 // array of boulders
 boulder_t boulders[MAX_BOULDERS];
 int boulders_cnt = 0;
+
+
+/**************** LEVELS **************/
+
+void level1(void)
+{
+    for(int x = 0; x < WIDTH; x++) {
+        for(int y = 0; y < HEIGHT; y++) {
+            if(x == 0 || y == 0 || x == WIDTH-1|| y == HEIGHT-1)
+                scene[x][y].block = WALL | 0x80;
+            else
+                scene[x][y].block = BLANK;
+        }
+    }
+    for(int i = 0; i < 5; ++i) {
+        scene[5-i][26-i].block = WALL | 0x80;
+        scene[35+i][26-i].block = WALL | 0x80;
+
+
+        scene[24-i][15].block = WALL | 0x80;
+    }
+
+    new_boulder(25, 25);
+    new_boulder(15, 25);
+    new_boulder(21, 13);
+    
+    scene[24][23].block = WALL | 0x80;
+    scene[23][24].block = WALL | 0x80;
+    scene[25][21].block = WALL | 0x80;
+    scene[24][19].block = WALL | 0x80;
+    scene[25][17].block = WALL | 0x80;
+    
+    players[0].x = 7;
+    players[0].y = 25;
+    players[1].x = 10;
+    players[1].y = 25;
+    finish_x = 16;
+    finish_y = 21;
+    scene[finish_x][finish_y].block = WALL | 0x80;
+    scene[finish_x+1][finish_y].block = WALL | 0x80;
+}
+
+void level2(void)
+{
+    for(int x = 0; x < WIDTH; x++) {
+        for(int y = 0; y < HEIGHT; y++) {
+            if(x == 0 || y == 0 || x == WIDTH-1|| y == HEIGHT-1)
+                scene[x][y].block = WALL | 0x80;
+            else
+                scene[x][y].block = BLANK;
+        }
+    }
+    players[0].x = 7;
+    players[0].y = 25;
+    players[1].x = 10;
+    players[1].y = 25;
+    finish_x = 16;
+    finish_y = 26;
+    scene[finish_x][finish_y].block = WALL | 0x80;
+    scene[finish_x+1][finish_y].block = WALL | 0x80;
+}
+void level3(void)
+{
+    for(int x = 0; x < WIDTH; x++) {
+        for(int y = 0; y < HEIGHT; y++) {
+            if(x == 0 || y == 0 || x == WIDTH-1|| y == HEIGHT-1)
+                scene[x][y].block = WALL | 0x80;
+            else
+                scene[x][y].block = BLANK;
+        }
+    }
+    players[0].x = 7;
+    players[0].y = 25;
+    players[1].x = 10;
+    players[1].y = 25;
+    finish_x = 16;
+    finish_y = 25;
+    scene[finish_x][finish_y].block = WALL | 0x80;
+    scene[finish_x+1][finish_y].block = WALL | 0x80;
+}
+
+void (*levels[])() = {level1, level2, level3};
+
+/************** END LEVELS ************/
+
 
 /**
  * Inits boulders
@@ -200,40 +288,12 @@ int get_start_level(int level)
 void load_level(int level)
 {
     // pgm_read_byte
-    for(int x = 0; x < WIDTH; x++) {
-        for(int y = 0; y < HEIGHT; y++) {
-            if(x == 0 || y == 0 || x == WIDTH-1|| y == HEIGHT-1)
-                scene[x][y].block = WALL | 0x80;
-            else
-                scene[x][y].block = BLANK;
-        }
-    }
-    for(int i = 0; i < 5; ++i) {
-        scene[5-i][26-i].block = WALL | 0x80;
-        scene[35+i][26-i].block = WALL | 0x80;
-
-
-        scene[24-i][15].block = WALL | 0x80;
-    }
-
-    new_boulder(25, 25);
-    new_boulder(15, 25);
-    new_boulder(21, 13);
-    
-    scene[24][23].block = WALL | 0x80;
-    scene[23][24].block = WALL | 0x80;
-    scene[25][21].block = WALL | 0x80;
-    scene[24][19].block = WALL | 0x80;
-    scene[25][17].block = WALL | 0x80;
+    levels[level-1]();
 
     players[0].walk = 0;
     players[0].fall = 0;
-    players[0].x = 7;
-    players[0].y = 25;
     players[1].walk = 0;
     players[1].fall = 0;
-    players[1].x = 10;
-    players[1].y = 25;
     dead = 0;
 }
 
@@ -401,7 +461,7 @@ void redraw(void)
     DrawMap2(players[0].x, players[0].y, map_playerBlue);
     DrawMap2(players[1].x, players[1].y, map_playerRed);
     // finish
-    DrawMap2(5, 27, map_finish);
+    DrawMap2(finish_x, finish_y, map_finish);
     // lifts ..
 }
 
@@ -435,7 +495,7 @@ int play_level(int level)
         if((prevbtns ^ buttons) & buttons & BTN_A)
             swap = (swap + 1) & 1;
         // check finish
-        if(scene[players[0].x][players[0].y+1].adv.extra == FINISH_L && scene[players[1].x][players[1].y+1].adv.extra == FINISH_R)
+        if((players[0].x == finish_x || players[0].x == finish_x+1) && players[0].y == finish_y-2 && (players[1].x == finish_x || players[1].x == finish_x+1) && players[1].y == finish_y-2) 
             return GAME_NEXTLEVEL;
         if(dead)
             return GAME_RESET;
@@ -469,14 +529,15 @@ int main()
                 level += 1;
             else if(game_status == GAME_END)
                 break;
-        } while(level < LEVELS);
+        } while(level < LEVELS + 1);
 
-        if(level == LEVELS) {
+        if(level > LEVELS) {
             // TODO: congratz, you win all levels
-            while(1) ;
+            level = 0;
+            //while(1) ;
         }
 
-    } while(0);
+    } while(1);
 
     redraw();
 
