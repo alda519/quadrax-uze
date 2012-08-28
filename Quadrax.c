@@ -261,7 +261,7 @@ void move_player(int player, int buttons)
 
     } else if((buttons & (BTN_LEFT | BTN_DOWN)) == (BTN_LEFT | BTN_DOWN)) {
         // climbs down left
-        if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y+1) && ! FREE_BLOCK(x-1, y+4)) {
+        if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y+3) && ! FREE_BLOCK(x-1, y+4)) {
             players[player].x -= 1;
             players[player].y += 2;
         } else {
