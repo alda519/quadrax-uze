@@ -51,6 +51,9 @@ typedef struct {
 // array contains both players parameters
 player_t players[2];
 
+// is anyone dead?
+int dead = 0;
+
 #define MAX_BOULDERS 20
 
 // boulder description
@@ -100,7 +103,7 @@ int find_boulder(int x, int y) {
 }
 
 /**
- * Boulders also fall if they does not stand on ground
+ * Boulders also fall if they do not stand on ground
  */
 void boulders_fall(void) {
     for(int b = 0; b < boulders_cnt; b++) {
@@ -113,10 +116,10 @@ void boulders_fall(void) {
             scene[boulders[b].x+1][boulders[b].y+2].adv.type = SOLID;
             boulders[b].y += 1;
         }
-// TODO what if boulder falls on someones head
-//        for(int p = 0; p < 2; ++p)
-//            if((players[p].x == boulders[b].x || players[p].x == boulders[b].x+1) && players[p].y == boulders[b].y + 2)
-//                players[p].dead = 1;
+        // what if boulder falls on someones head
+        for(int p = 0; p < 2; ++p)
+            if((players[p].x == boulders[b].x || players[p].x == boulders[b].x+1) && players[p].y == boulders[b].y + 1)
+                dead = 1;
     }
 }
 
@@ -224,11 +227,14 @@ void load_level(int level)
     scene[25][17].block = WALL | 0x80;
 
     players[0].walk = 0;
+    players[0].fall = 0;
     players[0].x = 7;
     players[0].y = 25;
     players[1].walk = 0;
+    players[1].fall = 0;
     players[1].x = 10;
     players[1].y = 25;
+    dead = 0;
 }
 
 
@@ -357,9 +363,8 @@ void fall_player(int player)
         players[player].y += 1;
         players[player].fall += 1;
     } else {
-        if(players[player].fall > 3) {
-            // TODO: player is dead, reset level
-        }
+        if(players[player].fall > 3)
+            dead = 1;
         // reset counter on ground
         players[player].fall = 0;
     }
@@ -432,7 +437,8 @@ int play_level(int level)
         // check finish
         if(scene[players[0].x][players[0].y+1].adv.extra == FINISH_L && scene[players[1].x][players[1].y+1].adv.extra == FINISH_R)
             return GAME_NEXTLEVEL;
-        // TODO players can die
+        if(dead)
+            return GAME_RESET;
         if(0)
             return GAME_END;
         prevbtns = buttons;
