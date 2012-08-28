@@ -283,18 +283,22 @@ void move_player(int player, int buttons)
         }
 
     } else if(buttons & BTN_LEFT) {
-        if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && !(FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1,y+3) && FREE_BLOCK(x-1, y+4) && FREE_BLOCK(x-1, y+5)))
+        if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && !FREE_BLOCK(x-1,y+3)) {
+            players[player].x -= 1;
+            players[player].y += 1;
+        } else if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && !(FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1,y+3) && FREE_BLOCK(x-1, y+4) && FREE_BLOCK(x-1, y+5)))
             players[player].x -= 1;
         else if(FREE_BLOCK(x-1, y) && FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y+1)) {
             players[player].x -= 1;
             players[player].y -= 1;
         } else if(FREE_BLOCK(x-3, y) && FREE_BLOCK(x-3, y+1)) {
-            // nejde prejet druheho
+            // the other player might block pushing boulder
             if(players[(player+1)%2].x == x-3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
             else {
             int b = find_boulder(x-2, y);
-            if(b) {
+            // check boulder put on top of boulder
+            if(b && !find_boulder(x-3, y-2) && !find_boulder(x-2, y-2) && !find_boulder(x-1, y-2)) {
                 boulders[b-1].x -= 1;
                 scene[x-1][y].adv.type = FREE;
                 scene[x-1][y+1].adv.type = FREE;
@@ -306,18 +310,22 @@ void move_player(int player, int buttons)
         }
 
     } else if(buttons & BTN_RIGHT) {
-        if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)))
+        if(FREE_BLOCK(x+1,y) && FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && !FREE_BLOCK(x+1,y+3)) {
+            players[player].x += 1;
+            players[player].y += 1;
+        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)))
             players[player].x += 1;
         else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1)) {
             players[player].x += 1;
             players[player].y -= 1;
         } else if(FREE_BLOCK(x+3, y) && FREE_BLOCK(x+3, y+1)) {
-            // nejde prejet druheho
+            // the other player might block pushing boulder
             if(players[(player+1)%2].x == x+3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
             else {
             int b = find_boulder(x+1, y);
-            if(b) {
+            // check boulder put on top of boulder
+            if(b && !find_boulder(x, y-2) && !find_boulder(x+1, y-2) && !find_boulder(x+2, y-2)) {
                 boulders[b-1].x += 1;
                 scene[x+1][y].adv.type = FREE;
                 scene[x+1][y+1].adv.type = FREE;
