@@ -18,6 +18,12 @@
 #define SCALE_X 4
 #define SCALE_Y 3
 
+#if BLOCK_X * SCALE_X == BLOCK_Y * SCALE_Y
+    #define BLOCK (BLOCK_X * SCALE_X)
+#else
+    #warning Block size has to be square
+#endif
+
 #define PAL_WIDTH 10 * 6 * SCALE_X
 #define PAL_HEIGHT 6 * 8 * SCALE_Y * 2
 
@@ -43,6 +49,8 @@ enum {
     FINISH = 'F',
 };
 
+int objects[] = { BLANK, WALL, FINISH, BOULDER, BLUE_PLAYER, RED_PLAYER };
+
 // drawing modes
 enum {
     POINT,
@@ -62,9 +70,49 @@ enum {
 // implicit drawing tools
 int tools[2] = {P_WALL, P_BLANK};
 
+// 
+int colors[] = {
+    0xff, // BLANK
+    0x999999ff, // WALL
+    0xffff00ff, // FINISH
+    0xffffff, // BOULDER
+    0xffff, // BLUE PLAYER
+    0xff0000ff, // RED PLAYER
+};
 
 // array to store map
 unsigned char map[WIDTH][HEIGHT];
+
+
+int finish_x = -1, finish_y = -1, player1_x = -1, player1_y = -1, player2_x = -1, player2_y = -1;
+
+
+// boulders staff
+struct boulder_t{ int x, y; };
+#define MAX_BOULDERS 50
+int boulders_cnt = 0;
+struct boulder_t boulders[MAX_BOULDERS];
+
+/**
+ *
+ */
+int new_boulder(int x, int y)
+{
+    if(boulders_cnt < MAX_BOULDERS) {
+        boulders[boulders_cnt].x = x;
+        boulders[boulders_cnt].y = y;
+        boulders_cnt++;
+    } else
+        return 0;
+}
+
+/**
+ *
+ */
+int find_boulder(int x, int y)
+{
+    return 1;
+}
 
 /**
  *
@@ -97,7 +145,15 @@ void change_tool(SDL_MouseButtonEvent button)
             tools[1] = (button.y - 110) / 48;
             break;
     }
-    printf("tools : %d , %d \n", tools[0], tools[1]);
+}
+
+
+/**
+ *
+ */
+void drawSquare(SDL_Surface *scr, int x, int y, int color)
+{
+    boxColor(scr, 11+x*BLOCK, 11+y*BLOCK, 9+(x+1)*BLOCK, 9+(y+1)*BLOCK, color);
 }
 
 
@@ -138,17 +194,83 @@ void init_screen(SDL_Surface *screen)
         }
     }
 
+    // draw boulders
+    for(int b = 0; b < boulders_cnt; b++) {
+        drawSquare(screen, boulders[b].x, boulders[b].y, colors[P_BOULDER]);
+        drawSquare(screen, boulders[b].x, boulders[b].y+1, colors[P_BOULDER]);
+        drawSquare(screen, boulders[b].x+1, boulders[b].y, colors[P_BOULDER]);
+        drawSquare(screen, boulders[b].x+1, boulders[b].y+1, colors[P_BOULDER]);
+    }
+
     redraw_grid(screen);
     
     // update
     SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
 
+
 /**
  *
  */
-void fill_area(SDL_Surface *screen, int x1, int y1, int x2, int y2, int which)
+void delete_map(SDL_Surface *screen, int x, int y, int w, int h)
 {
+    printf("delete_map %d %d\n", x, y);
+    for(int i = x; i < x + w; ++i)
+        for(int j = y; j < y + h; ++j) {
+            map[x][y] = P_BLANK;
+            drawSquare(screen, x, y, P_BLANK);
+        }
+}
+
+/**
+ *
+ */
+void delete(SDL_Surface *screen, int x, int y, int tool)
+{
+    // smazat hrace, kameny, cil
+    switch(map[x][y]) {
+        //case P_BLANK:
+        //case P_WALL:
+        case P_FINISH:
+            delete_map(screen, finish_x, finish_y, 2, 1);
+            break;
+        case P_BOULDER:
+            // najit vsechny kameny
+            // delete_map(screen, x, y, 2, 2);
+            break;
+        case P_BLUE_PLAYER:
+            delete_map(screen, player1_x, player1_y, 1, 2);
+            break;
+        case P_RED_PLAYER:
+            delete_map(screen, player2_x, player2_y, 1, 2);
+            break;
+    }
+}
+
+
+/**
+ *
+ */
+void fill_area_map(SDL_Surface *screen, int x1, int y1, int x2, int y2, int tool)
+{
+    for(int i = x1; i <= x2; ++i) {
+        for(int j = y1; j <= y2; ++j) {
+            // remove special objects
+            delete(screen, i, j, tool);
+            // fill with new object
+            drawSquare(screen, i, j, colors[tool]);
+            map[i][j]  = tool;
+        }
+    }
+}
+
+/**
+ *
+ */
+void fill_area(SDL_Surface *screen, int x1, int y1, int x2, int y2, int tool)
+{
+    if(tool != P_BLANK && tool != P_WALL)
+        return; // do not fill area with anything else
     int tmp;
     if(x2 < x1) {
         tmp = x1;
@@ -160,37 +282,46 @@ void fill_area(SDL_Surface *screen, int x1, int y1, int x2, int y2, int which)
         y1 = y2;
         y2 = tmp;
     }
-    for(int i = (x1-10)/(BLOCK_X * SCALE_X); i <= (x2-10)/(BLOCK_X*SCALE_X); ++i) {
-        for(int j = (y1-10)/(BLOCK_Y*SCALE_Y); j <= (y2-10)/(BLOCK_Y*SCALE_Y); ++j) {
-            if(which) {
-                boxColor(screen, 10+i*BLOCK_X * SCALE_X+1, 10+j*(BLOCK_Y*SCALE_Y)+1, 10+(i+1)*BLOCK_X * SCALE_X-1, 10+(j+1)*(BLOCK_Y*SCALE_Y)-1 , 0x000000ff);
-                map[i][j]  = '.';
-            } else {
-                boxColor(screen, 10+i*BLOCK_X * SCALE_X+1, 10+j*(BLOCK_Y*SCALE_Y)+1, 10+(i+1)*BLOCK_X * SCALE_X-1, 10+(j+1)*(BLOCK_Y*SCALE_Y)-1, 0x999999ff);
-                map[i][j]  = '#';
-            }
-        }
-    }
+    fill_area_map(screen, (x1-10)/BLOCK, (y1-10)/BLOCK, (x2-10)/BLOCK, (y2-10)/BLOCK, tool); 
     SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
 
 /**
  *
  */
-void fill_point(SDL_Surface *screen, int x, int y, int which)
+void fill_point(SDL_Surface *screen, int x, int y, int tool)
 {
     int i = (x-10)/(BLOCK_X * SCALE_X);
     int j = (y-10)/(BLOCK_Y*SCALE_Y);
-    if(which) {
-        if(map[i][j] == '.')
-            return;
-        boxColor(screen, 10+i*BLOCK_X * SCALE_X+1, 10+j*(BLOCK_Y*SCALE_Y)+1, 10+(i+1)*BLOCK_X * SCALE_X-1, 10+(j+1)*(BLOCK_Y*SCALE_Y)-1 , 0x000000ff);
-        map[i][j]  = '.';
-    } else {
-        if(map[i][j] == '#')
-            return;
-        boxColor(screen, 10+i*BLOCK_X * SCALE_X+1, 10+j*(BLOCK_Y*SCALE_Y)+1, 10+(i+1)*BLOCK_X * SCALE_X-1, 10+(j+1)*(BLOCK_Y*SCALE_Y)-1 , 0x999999ff);
-        map[i][j]  = '#';
+
+    switch(tool) {
+        case P_BLANK:
+        case P_WALL:
+            if(map[i][j] == objects[tool])
+                return;
+            delete(screen, i, j, tool);
+            drawSquare(screen, i, j, colors[tool]);
+            map[i][j] = tool;
+            break;
+        case P_FINISH:
+            fill_area_map(screen, i, j, i+1, j, tool);
+            break;
+        case P_BLUE_PLAYER:
+            delete_map(screen, player1_x, player1_y, 1, 2);
+            player1_x = i;
+            player1_y = j;
+            fill_area_map(screen, i, j, i, j+1, tool);
+            break;
+        case P_RED_PLAYER:
+            delete_map(screen, player2_x, player2_y, 1, 2);
+            player2_x = i;
+            player2_y = j;
+            fill_area_map(screen, i, j, i, j+1, tool);
+            break;
+        case P_BOULDER:
+            fill_area_map(screen, i, j, i+1, j+1, tool);
+            new_boulder(i, j);
+            break;
     }
     SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
@@ -211,9 +342,30 @@ void load(const char * filename)
     for(int y = 0; y < HEIGHT; ++y)
         for(int x = 0; x < WIDTH; ++x) {
             c = fgetc(f);
-            if(c == '\n') {
-                x--;
-                continue;
+            switch(c) {
+                case 'B':
+                    new_boulder(x-1, y-1);
+                    break;
+                case '#':
+                case '.':
+                    break;
+                case 'F':
+                    finish_x = x;
+                    finish_y = y;
+                case '1':
+                    player1_x = x;
+                    player1_y = y;
+                    break;
+                case '2':
+                    player2_x = x;
+                    player2_y = y;
+                    break;
+                case EOF:
+                    fprintf(stderr, "not valid input file\n");
+                    return;
+                default:
+                    x--;
+                    continue;
             }
             map[x][y] = c;
         }
@@ -302,9 +454,11 @@ int main(int argc, char *argv[])
                 if(!in_map_area(event.button.x, event.button.y))
                     break;
                 if(event.motion.state & SDL_BUTTON(1)) {
-                    fill_point(screen, event.button.x, event.button.y, 0);
+                    if(tools[0] == P_BLANK || tools[0] == P_WALL)
+                        fill_point(screen, event.button.x, event.button.y, tools[0]);
                 } else if(event.motion.state & SDL_BUTTON(3)) {
-                    fill_point(screen, event.button.x, event.button.y, 1);
+                    if(tools[1] == P_BLANK || tools[1] == P_WALL)
+                        fill_point(screen, event.button.x, event.button.y, tools[1]);
                 }
                 break;
 
@@ -313,7 +467,10 @@ int main(int argc, char *argv[])
                 if(in_pallete_area(event.button.x, event.button.y))
                     change_tool(event.button);
                 if(mode == POINT && in_map_area(click.x, click.y)) {
-                    fill_area(screen, click.x, click.y, event.button.x, event.button.y, event.button.button == SDL_BUTTON_RIGHT);
+                    if(click.button == SDL_BUTTON_LEFT)
+                        fill_point(screen, click.x, click.y, tools[0]);
+                    else if(click.button == SDL_BUTTON_RIGHT)
+                        fill_point(screen, click.x, click.y, tools[1]);
                 }
                     
                 break;
@@ -322,8 +479,15 @@ int main(int argc, char *argv[])
                 if(mode == POINT)
                     break;
                 if(in_map_area(event.button.x, event.button.y) && in_map_area(click.x, click.y)) {
-                    if(event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT)
-                        fill_area(screen, click.x, click.y, event.button.x, event.button.y, event.button.button == SDL_BUTTON_RIGHT);
+                    int tool;
+                    if(event.button.button == SDL_BUTTON_LEFT)
+                        tool = tools[0];
+                    else if(event.button.button == SDL_BUTTON_RIGHT)
+                        tool = tools[1];
+                    else
+                        break;
+                    if(tool == P_WALL || tool == P_BLANK)
+                        fill_area(screen, click.x, click.y, event.button.x, event.button.y, tool);
                 }
                 break;
         }
@@ -336,6 +500,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+// krome zdi jen na click!
+
+// zobrazeni celeho kamene
+// smazani kamene pri prekresleni jeho casti
+// smazani vseho pod kamanem
+// 
 
 // left and right click different action?
 // select sth from pallete
