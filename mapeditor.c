@@ -222,14 +222,11 @@ void init_screen(SDL_Surface *screen)
  */
 void delete_map(SDL_Surface *screen, int x, int y, int w, int h)
 {
-    printf("delete_map %d %d\n", x, y);
     for(int i = x; i < x + w; ++i)
         for(int j = y; j < y + h; ++j) {
-            printf(" -- %d %d\n", i, j);
             map[i][j] = objects[P_BLANK];
             drawSquare(screen, i, j, colors[P_BLANK]);
         }
-    SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
 
 /**
@@ -237,26 +234,38 @@ void delete_map(SDL_Surface *screen, int x, int y, int w, int h)
  */
 void delete(SDL_Surface *screen, int x, int y, int tool)
 {
-    // smazat hrace, kameny, cil
-    switch(map[x][y]) {
-        //case P_BLANK:
-        //case P_WALL:
-        case 1: break;
-/*
-        case objects[P_FINISH]:
-            delete_map(screen, finish_x, finish_y, 2, 1);
-            break;
-        case objects[P_BOULDER]:
-            // najit vsechny kameny
-            // delete_map(screen, x, y, 2, 2);
-            break;
-        case objects[P_BLUE_PLAYER]:
-            delete_map(screen, player1_x, player1_y, 1, 2);
-            break;
-        case objects[P_RED_PLAYER]:
-            delete_map(screen, player2_x, player2_y, 1, 2);
-            break;
-*/
+    // boulder
+    for(int b = boulders_cnt-1; b >= 0; b--) {
+        if(boulders[b].x == x && boulders[b].y == y) {
+            delete_map(screen, boulders[b].x, boulders[b].y, 2, 2);
+            boulders[b] = boulders[--boulders_cnt];
+        } else if(boulders[b].x == x && boulders[b].y == y-1) {
+            delete_map(screen, boulders[b].x, boulders[b].y, 2, 2);
+            boulders[b] = boulders[--boulders_cnt];
+        } else if(boulders[b].x == x-1 && boulders[b].y == y-1) {
+            delete_map(screen, boulders[b].x, boulders[b].y, 2, 2);
+            boulders[b] = boulders[--boulders_cnt];
+        } else if(boulders[b].x == x-1 && boulders[b].y == y) {
+            delete_map(screen, boulders[b].x, boulders[b].y, 2, 2);
+            boulders[b] = boulders[--boulders_cnt];
+        }
+    }
+    // player
+    if(player1_x == x && (player1_y == y || player1_y == y-1)) {
+        delete_map(screen, player1_x, player1_y, 1, 2);
+        player1_x = -1;
+        player1_y = -1;
+    }
+    if(player2_x == x && (player2_y == y || player2_y == y-1)) {
+        delete_map(screen, player2_x, player2_y, 1, 2);
+        player2_x = -1;
+        player2_y = -1;
+    }
+    // finish
+    if(finish_y == y && (finish_x == x || finish_x == x-1)) {
+        delete_map(screen, finish_x, finish_y, 2, 1);
+        finish_x = -1;
+        finish_y = -1;
     }
 }
 
@@ -307,12 +316,13 @@ void fill_point(SDL_Surface *screen, int x, int y, int tool)
     int i = (x-10)/(BLOCK_X * SCALE_X);
     int j = (y-10)/(BLOCK_Y*SCALE_Y);
 
-    // TODO: nakreslit to tam
+    // lasr coordinates
+    static int a = -1, b = -1;
 
     switch(tool) {
         case P_BLANK:
         case P_WALL:
-            if(map[i][j] == objects[tool])
+            if(a == x && b == y && map[i][j] == objects[tool])
                 return;
             delete(screen, i, j, tool);
             drawSquare(screen, i, j, colors[tool]);
@@ -348,6 +358,8 @@ void fill_point(SDL_Surface *screen, int x, int y, int tool)
     }
     map[i][j] = objects[tool];
     SDL_UpdateRect(screen, 0, 0, 0, 0);
+    a = x;
+    b = y;
 }
 
 /**
@@ -508,15 +520,10 @@ int main(int argc, char *argv[])
                 if(mode == POINT)
                     break;
                 if(in_map_area(event.button.x, event.button.y) && in_map_area(click.x, click.y)) {
-                    int tool;
                     if(event.button.button == SDL_BUTTON_LEFT)
-                        tool = tools[0];
+                        fill_area(screen, click.x, click.y, event.button.x, event.button.y, tools[0]);
                     else if(event.button.button == SDL_BUTTON_RIGHT)
-                        tool = tools[1];
-                    else
-                        break;
-                    if(tool == P_WALL || tool == P_BLANK)
-                        fill_area(screen, click.x, click.y, event.button.x, event.button.y, tool);
+                        fill_area(screen, click.x, click.y, event.button.x, event.button.y, tools[1]);
                 }
                 break;
         }
@@ -528,14 +535,3 @@ int main(int argc, char *argv[])
     SDL_Quit();
     return 0;
 }
-
-// coding of objects:
-// 6(x) + 5(y) + 5(extra)
-//   extra: type of boulder, player, 
-
-// elevator: start + max + min (x + y y y) coords, which lever 
-// boulder: type + (X+y)
-
-// magnet and special boulder?
-// disappearing stone?
-// flame?
