@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <gfx-xform version="1">
-    <input file="../data/tiles.png" type="png" tile-width="6" tile-height="8" width="60" height="64" />
+    <input file="../data/tiles.png" type="png" tile-width="6" tile-height="8" width="60" height="80" />
     <output file="../data/tiles.inc">
 
     <tiles var-name="quadTiles"/>
@@ -37,6 +37,19 @@
     <map var-name="map_playerRed_m1l" left="5" top="4" width="2" height="2"/>
     <map var-name="map_playerRed_m2l" left="7" top="4" width="1" height="2"/>
     <map var-name="map_playerRed_m3l" left="8" top="4" width="2" height="2"/>
+
+    <!-- Fall animation -->
+    <map var-name="map_playerBlue_f1" left="0" top="6" width="1" height="2"/>
+    <map var-name="map_playerBlue_f2" left="1" top="6" width="1" height="2"/>
+    <map var-name="map_playerBlue_f3" left="2" top="6" width="1" height="2"/>
+    <map var-name="map_playerBlue_f4" left="3" top="6" width="1" height="3"/>
+    <map var-name="map_playerBlue_f5" left="4" top="6" width="1" height="3"/>
+    <map var-name="map_playerRed_f1" left="0" top="8" width="1" height="2"/>
+    <map var-name="map_playerRed_f2" left="1" top="8" width="1" height="2"/>
+    <map var-name="map_playerRed_f3" left="2" top="8" width="1" height="2"/>
+    <map var-name="map_playerRed_f4" left="5" top="6" width="1" height="3"/>
+    <map var-name="map_playerRed_f5" left="6" top="6" width="1" height="3"/>
+
 
     </maps>
     </output>
