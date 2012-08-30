@@ -41,7 +41,7 @@ const char datafile[] = "data/tiles_big.png";
 
 // text representation of objects
 enum {
-    BLANK = ' ',
+    BLANK = '.',
     WALL = '#',
     BLUE_PLAYER = '1',
     RED_PLAYER = '2',
@@ -189,8 +189,9 @@ void init_screen(SDL_Surface *screen)
     // draw loaded map
     for(int x = 0; x < WIDTH; ++x) {
         for(int y = 0; y < HEIGHT; ++y) {
-            if(map[x][y] == WALL)
-                boxColor(screen, 10+x*BLOCK_X*SCALE_X, 10+y*BLOCK_Y*SCALE_Y,10+(x+1)*BLOCK_X*SCALE_X, 10+(y+1)*BLOCK_Y*SCALE_Y, 0x999999ff);
+            if(map[x][y] == WALL) {
+                drawSquare(screen, x, y, colors[P_WALL]);
+            }
         }
     }
 
@@ -201,6 +202,13 @@ void init_screen(SDL_Surface *screen)
         drawSquare(screen, boulders[b].x+1, boulders[b].y, colors[P_BOULDER]);
         drawSquare(screen, boulders[b].x+1, boulders[b].y+1, colors[P_BOULDER]);
     }
+    // draw players and finish
+    drawSquare(screen, player1_x, player1_y, colors[P_BLUE_PLAYER]);
+    drawSquare(screen, player1_x, player1_y+1, colors[P_BLUE_PLAYER]);
+    drawSquare(screen, player2_x, player2_y, colors[P_RED_PLAYER]);
+    drawSquare(screen, player2_x, player2_y+1, colors[P_RED_PLAYER]);
+    drawSquare(screen, finish_x, finish_y, colors[P_FINISH]);
+    drawSquare(screen, finish_x+1, finish_y, colors[P_FINISH]);
 
     redraw_grid(screen);
     
@@ -217,9 +225,11 @@ void delete_map(SDL_Surface *screen, int x, int y, int w, int h)
     printf("delete_map %d %d\n", x, y);
     for(int i = x; i < x + w; ++i)
         for(int j = y; j < y + h; ++j) {
-            map[x][y] = P_BLANK;
-            drawSquare(screen, x, y, P_BLANK);
+            printf(" -- %d %d\n", i, j);
+            map[i][j] = objects[P_BLANK];
+            drawSquare(screen, i, j, colors[P_BLANK]);
         }
+    SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
 
 /**
@@ -231,19 +241,22 @@ void delete(SDL_Surface *screen, int x, int y, int tool)
     switch(map[x][y]) {
         //case P_BLANK:
         //case P_WALL:
-        case P_FINISH:
+        case 1: break;
+/*
+        case objects[P_FINISH]:
             delete_map(screen, finish_x, finish_y, 2, 1);
             break;
-        case P_BOULDER:
+        case objects[P_BOULDER]:
             // najit vsechny kameny
             // delete_map(screen, x, y, 2, 2);
             break;
-        case P_BLUE_PLAYER:
+        case objects[P_BLUE_PLAYER]:
             delete_map(screen, player1_x, player1_y, 1, 2);
             break;
-        case P_RED_PLAYER:
+        case objects[P_RED_PLAYER]:
             delete_map(screen, player2_x, player2_y, 1, 2);
             break;
+*/
     }
 }
 
@@ -259,7 +272,7 @@ void fill_area_map(SDL_Surface *screen, int x1, int y1, int x2, int y2, int tool
             delete(screen, i, j, tool);
             // fill with new object
             drawSquare(screen, i, j, colors[tool]);
-            map[i][j]  = tool;
+            map[i][j]  = objects[tool];
         }
     }
 }
@@ -294,6 +307,8 @@ void fill_point(SDL_Surface *screen, int x, int y, int tool)
     int i = (x-10)/(BLOCK_X * SCALE_X);
     int j = (y-10)/(BLOCK_Y*SCALE_Y);
 
+    // TODO: nakreslit to tam
+
     switch(tool) {
         case P_BLANK:
         case P_WALL:
@@ -301,28 +316,37 @@ void fill_point(SDL_Surface *screen, int x, int y, int tool)
                 return;
             delete(screen, i, j, tool);
             drawSquare(screen, i, j, colors[tool]);
-            map[i][j] = tool;
             break;
         case P_FINISH:
-            fill_area_map(screen, i, j, i+1, j, tool);
+            delete_map(screen, finish_x, finish_y, 2, 1);
+            drawSquare(screen, i, j, colors[tool]);
+            drawSquare(screen, i+1, j, colors[tool]);
+            finish_x = i;
+            finish_y = j;
             break;
         case P_BLUE_PLAYER:
             delete_map(screen, player1_x, player1_y, 1, 2);
+            drawSquare(screen, i, j, colors[tool]);
+            drawSquare(screen, i, j+1, colors[tool]);
             player1_x = i;
             player1_y = j;
-            fill_area_map(screen, i, j, i, j+1, tool);
             break;
         case P_RED_PLAYER:
             delete_map(screen, player2_x, player2_y, 1, 2);
+            drawSquare(screen, i, j, colors[tool]);
+            drawSquare(screen, i, j+1, colors[tool]);
             player2_x = i;
             player2_y = j;
-            fill_area_map(screen, i, j, i, j+1, tool);
             break;
         case P_BOULDER:
-            fill_area_map(screen, i, j, i+1, j+1, tool);
             new_boulder(i, j);
+            drawSquare(screen, i, j, colors[tool]);
+            drawSquare(screen, i, j+1, colors[tool]);
+            drawSquare(screen, i+1, j, colors[tool]);
+            drawSquare(screen, i+1, j+1, colors[tool]);
             break;
     }
+    map[i][j] = objects[tool];
     SDL_UpdateRect(screen, 0, 0, 0, 0);
 }
 
@@ -343,20 +367,21 @@ void load(const char * filename)
         for(int x = 0; x < WIDTH; ++x) {
             c = fgetc(f);
             switch(c) {
-                case 'B':
-                    new_boulder(x-1, y-1);
+                case BOULDER:
+                    new_boulder(x, y);
                     break;
-                case '#':
-                case '.':
+                case WALL:
+                case BLANK:
                     break;
-                case 'F':
+                case FINISH:
                     finish_x = x;
                     finish_y = y;
-                case '1':
+                    break;
+                case BLUE_PLAYER:
                     player1_x = x;
                     player1_y = y;
                     break;
-                case '2':
+                case RED_PLAYER:
                     player2_x = x;
                     player2_y = y;
                     break;
@@ -439,7 +464,11 @@ int main(int argc, char *argv[])
     int mode = POINT;
 
     do {
-        SDL_PollEvent(&event);
+        // wait for event
+        if(!SDL_PollEvent(&event)) {
+            SDL_Delay(1);
+            continue;
+        }
 
         switch(event.type) {
             case SDL_KEYDOWN: // left constroll switches mode
@@ -499,20 +528,6 @@ int main(int argc, char *argv[])
     SDL_Quit();
     return 0;
 }
-
-// krome zdi jen na click!
-
-// zobrazeni celeho kamene
-// smazani kamene pri prekresleni jeho casti
-// smazani vseho pod kamanem
-// 
-
-// left and right click different action?
-// select sth from pallete
-// set player start location
-// set finish location
-// place boulders
-// place other things
 
 // coding of objects:
 // 6(x) + 5(y) + 5(extra)
