@@ -170,6 +170,7 @@ int new_boulder(int x, int y) {
     if(boulders_cnt < MAX_BOULDERS) {
         boulders[boulders_cnt].x = x;
         boulders[boulders_cnt].y = y;
+        boulders[boulders_cnt].fall = 0;
         boulders_cnt += 1;
         scene[x][y].adv.type = SOLID;
         scene[x][y+1].adv.type = SOLID;
@@ -422,7 +423,9 @@ void move_player(int player, int buttons)
     } else if(buttons & BTN_DOWN) {
         players[player].y += 1;
     }*/
-    else return;
+    else
+        return; // hackity hack, no moving = no erasing
+    // erase players previous position
     SetTile(x, y, BLANK);
     SetTile(x, y+1, BLANK);
 }
