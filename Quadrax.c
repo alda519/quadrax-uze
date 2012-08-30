@@ -41,7 +41,6 @@ enum {
 // true if given block is not solid
 #define FREE_BLOCK(x, y) (scene[x][y].adv.type == FREE)
 
-
 // struct describing player
 typedef struct {
     unsigned char x, y;
@@ -63,6 +62,7 @@ int finish_x, finish_y;
 typedef struct boulder_t {
     int x;
     int y;
+    int fall;
 } boulder_t;
 
 // array of boulders
@@ -71,6 +71,8 @@ int boulders_cnt = 0;
 
 
 /**************** LEVELS **************/
+
+int new_boulder(int, int);
 
 void level1(void)
 {
@@ -100,8 +102,8 @@ void level1(void)
     scene[24][19].block = WALL | 0x80;
     scene[25][17].block = WALL | 0x80;
     
-    players[0].x = 7;
-    players[0].y = 25;
+    players[0].x = 23; //7;
+    players[0].y = 13; //25;
     players[1].x = 10;
     players[1].y = 25;
     finish_x = 16;
@@ -203,12 +205,24 @@ void boulders_fall(void) {
             scene[boulders[b].x][boulders[b].y+2].adv.type = SOLID;
             scene[boulders[b].x+1][boulders[b].y+2].adv.type = SOLID;
             boulders[b].y += 1;
+            boulders[b].fall = 1;
+        } else {
+            boulders[b].fall = 0;
         }
         // what if boulder falls on someones head
         for(int p = 0; p < 2; ++p)
             if((players[p].x == boulders[b].x || players[p].x == boulders[b].x+1) && players[p].y == boulders[b].y + 1)
                 dead = 1;
     }
+}
+
+/**
+ * Tells whether there is any falling boulder on given coordinates
+ */
+int falling_boulder(int x, int y)
+{
+    int b = find_boulder(x, y);
+    return b && boulders[b-1].fall;
 }
 
 /**
@@ -349,12 +363,12 @@ void move_player(int player, int buttons)
         }
 
     } else if(buttons & BTN_LEFT) {
-        if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && !FREE_BLOCK(x-1,y+3)) {
+        if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && !FREE_BLOCK(x-1,y+3) && !falling_boulder(x-2,y+3)) {
             players[player].x -= 1;
             players[player].y += 1;
-        } else if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && !(FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1,y+3) && FREE_BLOCK(x-1, y+4) && FREE_BLOCK(x-1, y+5)))
+        } else if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && !(FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1,y+3) && FREE_BLOCK(x-1, y+4) && FREE_BLOCK(x-1, y+5)) && !falling_boulder(x-2, y+2) && !falling_boulder(x-2, y+3) && !falling_boulder(x-2, y+4) && !falling_boulder(x-2, y+5))
             players[player].x -= 1;
-        else if(FREE_BLOCK(x-1, y) && FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y+1)) {
+        else if(FREE_BLOCK(x-1, y) && FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y+1) && !falling_boulder(x-2, y+1)) {
             players[player].x -= 1;
             players[player].y -= 1;
         } else if(FREE_BLOCK(x-3, y) && FREE_BLOCK(x-3, y+1)) {
@@ -376,12 +390,12 @@ void move_player(int player, int buttons)
         }
 
     } else if(buttons & BTN_RIGHT) {
-        if(FREE_BLOCK(x+1,y) && FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && !FREE_BLOCK(x+1,y+3)) {
+        if(FREE_BLOCK(x+1,y) && FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && !FREE_BLOCK(x+1,y+3) && !falling_boulder(x+1,y+3)) {
             players[player].x += 1;
             players[player].y += 1;
-        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)))
+        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)) && !falling_boulder(x+1, y+2) && !falling_boulder(x+1, y+3) && !falling_boulder(x+1, y+4) && !falling_boulder(x+1, y+5))
             players[player].x += 1;
-        else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1)) {
+        else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1) && !falling_boulder(x+1, y+1)) {
             players[player].x += 1;
             players[player].y -= 1;
         } else if(FREE_BLOCK(x+3, y) && FREE_BLOCK(x+3, y+1)) {
