@@ -71,7 +71,7 @@ enum { LAST_LEVEL, MAX_LEVEL };
 
 /**************** LEVELS **************/
 
-int new_boulder(int, int);
+unsigned char new_boulder(unsigned char, unsigned char);
 
 void level1(void)
 {
@@ -165,7 +165,7 @@ void init_boulders(void) {
 /**
  * Adds new boulder
  */
-int new_boulder(int x, int y) {
+unsigned char new_boulder(unsigned char x, unsigned char y) {
     if(boulders_cnt < MAX_BOULDERS) {
         boulders[boulders_cnt].x = x;
         boulders[boulders_cnt].y = y;
@@ -185,8 +185,8 @@ int new_boulder(int x, int y) {
 /**
  * Returns true if boulder is found on given coordinates
  */
-int find_boulder(int x, int y) {
-    for(int b = 0; b < boulders_cnt; ++b)
+int find_boulder(unsigned char x, unsigned char y) {
+    for(unsigned char b = 0; b < boulders_cnt; ++b)
         if(boulders[b].x == x && boulders[b].y == y)
             return b+1;
     return 0;
@@ -196,7 +196,7 @@ int find_boulder(int x, int y) {
  * Boulders also fall if they do not stand on ground
  */
 void boulders_fall(void) {
-    for(int b = 0; b < boulders_cnt; b++) {
+    for(unsigned char b = 0; b < boulders_cnt; b++) {
         if(FREE_BLOCK(boulders[b].x, boulders[b].y+2) && FREE_BLOCK(boulders[b].x+1, boulders[b].y+2)) {
             SetTile(boulders[b].x, boulders[b].y, BLANK);
             SetTile(boulders[b].x+1, boulders[b].y, BLANK);
@@ -210,7 +210,7 @@ void boulders_fall(void) {
             boulders[b].fall = 0;
         }
         // what if boulder falls on someones head
-        for(int p = 0; p < 2; ++p)
+        for(unsigned char p = 0; p < 2; ++p)
             if((players[p].x == boulders[b].x || players[p].x == boulders[b].x+1) && players[p].y == boulders[b].y + 1)
                 dead = 1;
     }
@@ -219,9 +219,9 @@ void boulders_fall(void) {
 /**
  * Tells whether there is any falling boulder on given coordinates
  */
-int falling_boulder(int x, int y)
+unsigned char falling_boulder(unsigned char x, unsigned char y)
 {
-    int b = find_boulder(x, y);
+    unsigned char b = find_boulder(x, y);
     return b && boulders[b-1].fall;
 }
 
@@ -229,14 +229,14 @@ int falling_boulder(int x, int y)
  * This function asks user to select level
  * Returns number of selected level
  */
-int get_start_level()
+unsigned char get_start_level()
 {
     SetTileTable(fonts);
     ClearVram();
     Print(4, 2, PSTR("SELECT LEVEL"));
 
     // load highest level from eeprom, player is not able to skip levels
-    int max_level = eeprom_data.data[MAX_LEVEL];
+    unsigned char max_level = eeprom_data.data[MAX_LEVEL];
     if(max_level == 0)
         max_level = 1;
 
@@ -244,8 +244,8 @@ int get_start_level()
         max_level = LEVELS;
 
     // print level list
-    int x = 4, y = 4;
-    for(int i = 1; i <= max_level; ++i) {
+    unsigned char x = 4, y = 4;
+    for(unsigned char i = 1; i <= max_level; ++i) {
         PrintByte(x, y, i, 0);
         if(i % 9 == 0) {
             x = 4;
@@ -256,7 +256,7 @@ int get_start_level()
     }
 
     // try to load last played level from eeprom
-    int level = eeprom_data.data[LAST_LEVEL];
+    unsigned char level = eeprom_data.data[LAST_LEVEL];
     if(level < 1)
         level = 1;
     if(level > max_level)
@@ -298,7 +298,7 @@ int get_start_level()
 /**
  * Loads given level from flash to RAM
  */
-void load_level(int level)
+void load_level(unsigned char level)
 {
     // pgm_read_byte
     levels[level-1]();
@@ -314,14 +314,14 @@ void load_level(int level)
 /**
  * Moves given player according to pressed buttons and terrain
  */
-void move_player(int player, int buttons)
+void move_player(unsigned char player, int buttons)
 {
     // players cannot move while falling
     if(players[player].fall)
         return;
 
-    int x = players[player].x;
-    int y = players[player].y;
+    unsigned char x = players[player].x;
+    unsigned char y = players[player].y;
     if((buttons & (BTN_LEFT | BTN_UP)) == (BTN_LEFT | BTN_UP)) {
         // climbs up left
         if(FREE_BLOCK(x-1,y-1) && FREE_BLOCK(x-1, y-2) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y)) {
@@ -375,7 +375,7 @@ void move_player(int player, int buttons)
             if(players[(player+1)%2].x == x-3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
             else {
-            int b = find_boulder(x-2, y);
+            unsigned char b = find_boulder(x-2, y);
             // check boulder put on top of boulder
             if(b && !find_boulder(x-3, y-2) && !find_boulder(x-2, y-2) && !find_boulder(x-1, y-2)) {
                 boulders[b-1].x -= 1;
@@ -403,7 +403,7 @@ void move_player(int player, int buttons)
             if(players[(player+1)%2].x == x+3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
             else {
-            int b = find_boulder(x+1, y);
+            unsigned char b = find_boulder(x+1, y);
             // check boulder put on top of boulder
             if(b && !find_boulder(x, y-2) && !find_boulder(x+1, y-2) && !find_boulder(x+2, y-2)) {
                 boulders[b-1].x += 1;
@@ -434,7 +434,7 @@ void move_player(int player, int buttons)
 /**
  * If player does not stand on ground, he falls
  */
-void fall_player(int player)
+void fall_player(unsigned char player)
 {
     if(scene[players[player].x][players[player].y+2].adv.type == 0) {
         SetTile(players[player].x, players[player].y, BLANK);
@@ -454,8 +454,8 @@ void fall_player(int player)
  */
 void draw_walls(void)
 {
-    for(int x = 0; x < 40; x++)
-        for(int y = 0; y < 28; y++)
+    for(unsigned char x = 0; x < 40; x++)
+        for(unsigned char y = 0; y < 28; y++)
                SetTile(x, y, scene[x][y].adv.extra);
 }
 
@@ -465,7 +465,7 @@ void draw_walls(void)
 void redraw(void)
 {
     // boulders
-    for(int b = 0; b < boulders_cnt; ++b)
+    for(unsigned char b = 0; b < boulders_cnt; ++b)
         DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
 
     // levers ...
@@ -512,7 +512,7 @@ void redraw(void)
 /**
  * Runs selected level
  */
-int play_level(int level)
+int play_level(unsigned char level)
 {
     init_boulders();
     load_level(level);
@@ -522,7 +522,7 @@ int play_level(int level)
     int prevbtns = 0;
     do {
         // for each player
-        for(int player = 1; player >= 0; --player) {
+        for(unsigned char player = 1; player >= 0; --player) {
             buttons = ReadJoypad(player);
             fall_player(player^swap);
             move_player(player^swap, buttons);
