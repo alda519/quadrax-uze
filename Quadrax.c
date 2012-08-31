@@ -69,6 +69,10 @@ typedef struct boulder_t {
 boulder_t boulders[MAX_BOULDERS];
 int boulders_cnt = 0;
 
+// data stored in eeprom support
+struct EepromBlockStruct eeprom_data;
+enum { LAST_LEVEL, MAX_LEVEL };
+#define EEPROM_ID 30
 
 /**************** LEVELS **************/
 
@@ -102,8 +106,8 @@ void level1(void)
     scene[24][19].block = WALL | 0x80;
     scene[25][17].block = WALL | 0x80;
     
-    players[0].x = 23; //7;
-    players[0].y = 13; //25;
+    players[0].x = 23;
+    players[0].y = 13;
     players[1].x = 10;
     players[1].y = 25;
     finish_x = 16;
@@ -230,70 +234,69 @@ int falling_boulder(int x, int y)
  * This function asks user to select level
  * Returns number of selected level
  */
-int get_start_level(int level)
+int get_start_level()
 {
     SetTileTable(fonts);
-
     ClearVram();
-
     Print(4, 2, PSTR("SELECT LEVEL"));
 
-    int x, y;
-    int val = 1;
-    for(y = 4; y < 26; y+= 3)
-        for(x = 4; x < 38; x += 4)
-            PrintByte(x, y, val++, 0);
+    // load highest level from eeprom, player is not able to skip levels
+    int max_level = eeprom_data.data[MAX_LEVEL];
+    if(max_level == 0)
+        max_level = 1;
 
-    // last level might be loaded from EEPROM
-    x = 5;
-    y = 4;
-    val = 1;
+    if(max_level > LEVELS)
+        max_level = LEVELS;
+
+    // print level list
+    int x = 4, y = 4;
+    for(int i = 1; i <= max_level; ++i) {
+        PrintByte(x, y, i, 0);
+        if(i % 9 == 0) {
+            x = 4;
+            y += 3;
+        } else {
+            x += 4;
+        }
+    }
+
+    // try to load last played level from eeprom
+    int level = eeprom_data.data[LAST_LEVEL];
+    if(level < 1)
+        level = 1;
+    if(level > max_level)
+        level = max_level;
+
+    // compute starting position
+    x = 5 + ((level-1) % 9)*4;
+    y = 4 + ((level-1) / 9)*3;
 
     int button;
     do {
         button = ReadJoypad(0);
         PrintChar(x, y, ' ');
         PrintChar(x-3, y, ' ');
-        SetTile(x, y, BLANK);
         if(button & BTN_LEFT) {
-            if(val % 9 == 1) {
-                val += 8;
-                x += 8*4;
-            } else {
-                val -= 1;
-                x -= 4;
-            }
+            if(level > 1)
+                level--;
         } else if(button & BTN_RIGHT) {
-            if(val % 9 == 0) {
-                val -= 8;
-                x -= 8*4;
-            } else {
-                val += 1;
-                x += 4;
-            }
+            if(level < max_level)
+                level++;
         } else if(button & BTN_UP) {
-            if(val < 10) {
-                val += 7*9;
-                y += 7*3;
-            } else {
-                val -= 9;
-                y -= 3;
-            }
+            if(level > 9)
+                level -= 9;
         } else if(button & BTN_DOWN) {
-            if(val > 7*9) {
-                val -= 7*9;
-                y -= 7*3;
-            } else {
-                val += 9;
-                y += 3;
-            }
+            if(level < max_level - 8)
+                level += 9;
         }
+        x = 5 + ((level-1) % 9)*4;
+        y = 4 + ((level-1) / 9)*3;
         PrintChar(x, y, '<');
         PrintChar(x-3, y, '>');
         WaitVsync(4);
     } while(! (button & BTN_START));
 
-    return val;
+    return level;
 }
 
 
@@ -394,9 +397,10 @@ void move_player(int player, int buttons)
         if(FREE_BLOCK(x+1,y) && FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && !FREE_BLOCK(x+1,y+3) && !falling_boulder(x+1,y+3)) {
             players[player].x += 1;
             players[player].y += 1;
-        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)) && !falling_boulder(x+1, y+2) && !falling_boulder(x+1, y+3) && !falling_boulder(x+1, y+4) && !falling_boulder(x+1, y+5))
+        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)) && !falling_boulder(x+1, y+2) && !falling_boulder(x+1, y+3) && !falling_boulder(x+1, y+4) && !falling_boulder(x+1, y+5)) {
             players[player].x += 1;
-        else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1) && !falling_boulder(x+1, y+1)) {
+            players[player].walk += 1;
+        } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1) && !falling_boulder(x+1, y+1)) {
             players[player].x += 1;
             players[player].y -= 1;
         } else if(FREE_BLOCK(x+3, y) && FREE_BLOCK(x+3, y+1)) {
@@ -423,8 +427,10 @@ void move_player(int player, int buttons)
     } else if(buttons & BTN_DOWN) {
         players[player].y += 1;
     }*/
-    else
+    else {
+        players[player].walk = 0;
         return; // hackity hack, no moving = no erasing
+    }
     // erase players previous position
     SetTile(x, y, BLANK);
     SetTile(x, y+1, BLANK);
@@ -475,7 +481,32 @@ void redraw(void)
     SetTile(18,25, SWITCH2_OFF);
     */
     // players
-    DrawMap2(players[0].x, players[0].y, map_playerBlue);
+    if(players[0].walk > 4)
+        players[0].walk = 1;
+
+    switch(players[0].walk) {
+        case 0:
+            DrawMap2(players[0].x, players[0].y, map_playerBlue);
+            break;
+
+        case 1: // walk right
+            DrawMap2(players[0].x, players[0].y, map_playerBlue_m1r);
+            break;
+        case 2: // walk right
+            DrawMap2(players[0].x, players[0].y, map_playerBlue_m2r);
+            break;
+        case 3: // walk right
+            DrawMap2(players[0].x, players[0].y, map_playerBlue_m3r);
+            break;
+        case 4: // walk right
+            DrawMap2(players[0].x, players[0].y, map_playerBlue_m2r);
+            break;
+    }
+    if(players[0].fall) {
+        DrawMap2(players[0].x, players[0].y, map_playerBlue_f1);
+        DrawMap2(players[0].x, players[0].y, map_playerBlue_f1);
+    }
+
     DrawMap2(players[1].x, players[1].y, map_playerRed);
     // finish
     DrawMap2(finish_x, finish_y, map_finish);
@@ -514,9 +545,11 @@ int play_level(int level)
         // check finish
         if((players[0].x == finish_x || players[0].x == finish_x+1) && players[0].y == finish_y-2 && (players[1].x == finish_x || players[1].x == finish_x+1) && players[1].y == finish_y-2) 
             return GAME_NEXTLEVEL;
+        // restart game if someone is dead
         if(dead)
             return GAME_RESET;
-        if(0)
+        // back to menu
+        if(buttons & BTN_SELECT)
             return GAME_END;
         prevbtns = buttons;
     } while(1);
@@ -530,21 +563,34 @@ int main()
 {
     srand(1);
 
+    // read eeprom data
+    EepromReadBlock(EEPROM_ID, &eeprom_data);
+    eeprom_data.id = EEPROM_ID;
+
     int level = 0;
     int game_status;
     // infinite loop of selecting levels and starting them
     do {
-        level = get_start_level(level);
+        level = get_start_level();
         SetTileTable(quadTiles);
         ClearVram();
 
         // restarting level loop
         do {
+            // store to EEPROM last played level
+            eeprom_data.data[LAST_LEVEL] = level;
+            EepromWriteBlock(&eeprom_data);
+            // play level
             game_status = play_level(level);
 
-            if(game_status == GAME_NEXTLEVEL)
+            if(game_status == GAME_NEXTLEVEL) {
                 level += 1;
-            else if(game_status == GAME_END)
+                // store to EEPROM highest played level
+                if(level > eeprom_data.data[MAX_LEVEL]) {
+                    eeprom_data.data[MAX_LEVEL] = level;
+                    EepromWriteBlock(&eeprom_data);
+                }
+            } else if(game_status == GAME_END)
                 break;
         } while(level < LEVELS + 1);
 
@@ -555,34 +601,4 @@ int main()
         }
 
     } while(1);
-
-    redraw();
-
-    // walk animation
-
-    int www = 4;
-
-    for(int x = 5; x < 32; ++x)
-        SetTile(x, 22, WALL);
-
-    DrawMap2(5, 20, map_playerBlue);
-    WaitVsync(www);
-    for(int x = 5; x < 30; ++x) {
-        DrawMap2(x, 20, map_playerBlue_m1r);
-        WaitVsync(www);
-        x++;
-        SetTile(x-1, 20, 0);
-        SetTile(x-1, 21, 0);
-        DrawMap2(x, 20, map_playerBlue_m2r);
-        WaitVsync(www);
-        DrawMap2(x, 20, map_playerBlue_m3r);
-        WaitVsync(www);
-        SetTile(x, 20, 0);
-        SetTile(x, 21, 0);
-        DrawMap2(x+1, 20, map_playerBlue_m2r);
-        WaitVsync(www);
-    }
-    DrawMap2(31, 20, map_playerBlue);
-
-    while(1);
 }
