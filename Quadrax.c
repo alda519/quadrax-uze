@@ -29,14 +29,10 @@ enum {
 } tiles;
 
 // symbolic names for block throuhgput
-enum {
-    FREE, SOLID
-} mapsth;
+enum { FREE, SOLID };
 
 // game return status codes
-enum {
-    GAME_NEXTLEVEL, GAME_RESET, GAME_END,
-} gamestatus;
+enum { GAME_NEXTLEVEL, GAME_RESET, GAME_END, };
 
 // true if given block is not solid
 #define FREE_BLOCK(x, y) (scene[x][y].adv.type == FREE)
@@ -51,23 +47,22 @@ typedef struct {
 player_t players[2];
 
 // is anyone dead?
-int dead = 0;
+unsigned char dead = 0;
 
 // finish coordinates
-int finish_x, finish_y;
+unsigned char finish_x, finish_y;
 
 #define MAX_BOULDERS 20
 
 // boulder description
 typedef struct boulder_t {
-    int x;
-    int y;
-    int fall;
+    unsigned char x, y;
+    unsigned char fall;
 } boulder_t;
 
 // array of boulders
 boulder_t boulders[MAX_BOULDERS];
-int boulders_cnt = 0;
+unsigned char boulders_cnt = 0;
 
 // data stored in eeprom support
 struct EepromBlockStruct eeprom_data;
@@ -567,8 +562,8 @@ int main()
     EepromReadBlock(EEPROM_ID, &eeprom_data);
     eeprom_data.id = EEPROM_ID;
 
-    int level = 0;
-    int game_status;
+    unsigned char level = 0;
+    unsigned char game_status;
     // infinite loop of selecting levels and starting them
     do {
         level = get_start_level();
@@ -596,9 +591,6 @@ int main()
 
         if(level > LEVELS) {
             // TODO: congratz, you win all levels
-            level = 0;
-            //while(1) ;
         }
-
     } while(1);
 }
