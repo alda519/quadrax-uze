@@ -521,8 +521,6 @@ int play_level(int level)
     char swap = 0;
     int prevbtns = 0;
     do {
-        redraw();
-        WaitVsync(3);
         // for each player
         for(int player = 1; player >= 0; --player) {
             buttons = ReadJoypad(player);
@@ -531,6 +529,10 @@ int play_level(int level)
         }
         // boulders are falling
         boulders_fall();
+
+        redraw();
+        WaitVsync(3);
+
         // player 0 can reset game
         if(buttons & BTN_START)
             return GAME_RESET;
@@ -580,6 +582,7 @@ int main()
 
             if(game_status == GAME_NEXTLEVEL) {
                 level += 1;
+                WaitVsync(20);
                 // store to EEPROM highest played level
                 if(level > eeprom_data.data[MAX_LEVEL]) {
                     eeprom_data.data[MAX_LEVEL] = level;
