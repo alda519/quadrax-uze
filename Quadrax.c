@@ -522,7 +522,7 @@ int play_level(unsigned char level)
     int prevbtns = 0;
     do {
         // for each player
-        for(unsigned char player = 1; player >= 0; --player) {
+        for(signed char player = 1; player >= 0; --player) {
             buttons = ReadJoypad(player);
             fall_player(player^swap);
             move_player(player^swap, buttons);
