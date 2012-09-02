@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <gfx-xform version="1">
-    <input file="../data/tiles.png" type="png" tile-width="6" tile-height="8" width="60" height="120" />
+    <input file="../data/tiles.png" type="png" tile-width="6" tile-height="8" width="60" height="160" />
     <output file="../data/tiles.inc">
 
     <tiles var-name="quadTiles"/>
@@ -79,6 +79,17 @@
     <map var-name="map_playerRed_cr4" left="5" top="12" width="1" height="1"/>
     <map var-name="map_playerRed_cr5" left="3" top="11" width="1" height="3"/>
     <map var-name="map_playerRed_cr6" left="9" top="9" width="1" height="2"/>
+
+    <!-- pushing boulder -->
+    <map var-name="map_playerBlue_pr" left="6" top="11" width="4" height="2"/>
+    <map var-name="map_playerBlue_pl" left="6" top="13" width="4" height="2"/>
+    <map var-name="map_playerBlue_pr1" left="4" top="14" width="1" height="2"/>
+    <map var-name="map_playerBlue_pl1" left="5" top="14" width="1" height="2"/>
+
+    <map var-name="map_playerRed_pr" left="0" top="14" width="4" height="2"/>
+    <map var-name="map_playerRed_pl" left="0" top="16" width="4" height="2"/>
+    <map var-name="map_playerRed_pr1" left="4" top="16" width="1" height="2"/>
+    <map var-name="map_playerRed_pl1" left="5" top="16" width="1" height="2"/>
 
     </maps>
     </output>

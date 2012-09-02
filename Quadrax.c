@@ -330,6 +330,22 @@ char fall_player(unsigned char player)
     }
 }
 
+void push_boulder(unsigned char x, unsigned char y, signed char dir)
+{
+    unsigned char b = find_boulder(x, y);
+    boulders[b-1].x += dir;
+    if(dir == -1) {
+        scene[x+1][y].adv.type = FREE;
+        scene[x+1][y+1].adv.type = FREE;
+        scene[x-1][y].adv.type = SOLID;
+        scene[x-1][y+1].adv.type = SOLID;
+    } else if(dir == 1) {
+        scene[x][y].adv.type = FREE;
+        scene[x][y+1].adv.type = FREE;
+        scene[x+2][y].adv.type = SOLID;
+        scene[x+2][y+1].adv.type = SOLID;
+    }
+}
 
 // finite state machine states
 enum { IDLE,
@@ -338,11 +354,11 @@ WALK_R_1, WALK_R_2, WALK_R_3, WALK_R_4,
 WALK_LU, WALK_LD,
 WALK_LUU, WALK_LUU_2, WALK_LUU_3, WALK_LUU_4,
 WALK_LDD, WALK_LDD_2, WALK_LDD_3, WALK_LDD_4,
-PUSHL,
+PUSHL, PUSHL_1,
 WALK_R, WALK_RU, WALK_RD,
 WALK_RUU, WALK_RUU_2, WALK_RUU_3, WALK_RUU_4,
 WALK_RDD, WALK_RDD_2, WALK_RDD_3, WALK_RDD_4,
-PUSHR,
+PUSHR, PUSHR_1,
 FALL_1, FALL_2, FALL_3, FALL_4, FALL_E,
 };
 
@@ -407,12 +423,7 @@ char get_new_state(unsigned char player, int buttons)
             unsigned char b = find_boulder(x-2, y);
             // check boulder put on top of boulder
             if(b && !find_boulder(x-3, y-2) && !find_boulder(x-2, y-2) && !find_boulder(x-1, y-2)) {
-                boulders[b-1].x -= 1;
-                scene[x-1][y].adv.type = FREE;
-                scene[x-1][y+1].adv.type = FREE;
-                scene[x-3][y].adv.type = SOLID;
-                scene[x-3][y+1].adv.type = SOLID;
-                players[player].x -= 1;
+                return PUSHL;
             }
             }
         }
@@ -432,12 +443,7 @@ char get_new_state(unsigned char player, int buttons)
             unsigned char b = find_boulder(x+1, y);
             // check boulder put on top of boulder
             if(b && !find_boulder(x, y-2) && !find_boulder(x+1, y-2) && !find_boulder(x+2, y-2)) {
-                boulders[b-1].x += 1;
-                scene[x+1][y].adv.type = FREE;
-                scene[x+1][y+1].adv.type = FREE;
-                scene[x+3][y].adv.type = SOLID;
-                scene[x+3][y+1].adv.type = SOLID;
-                players[player].x += 1;
+                return PUSHR;
             }
             }
         }
@@ -677,6 +683,41 @@ void move_player(unsigned char player, int button)
             players[player].state = IDLE;
             break;
 
+        // pushing boulder
+        case PUSHL:
+            DrawMap2(players[player].x-3, players[player].y, map_playerBlue_pl);
+            push_boulder(players[player].x-2, players[player].y, -1);
+            players[player].x -= 1;
+            players[player].state = PUSHL_1;
+            break;
+        case PUSHL_1:
+            SetTile(players[player].x+1, players[player].y, BLANK);
+            SetTile(players[player].x+1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_pl1);
+            DrawMap2(players[player].x-2, players[player].y, map_boulder);
+            if(get_new_state(player, button) == PUSHL)
+                players[player].state = PUSHL;
+            else
+                players[player].state = IDLE;
+            break;
+
+        case PUSHR:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_pr);
+            push_boulder(players[player].x+1, players[player].y, +1);
+            players[player].x += 1;
+            players[player].state = PUSHR_1;
+            break;
+        case PUSHR_1:
+            SetTile(players[player].x-1, players[player].y, BLANK);
+            SetTile(players[player].x-1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_pr1);
+            DrawMap2(players[player].x+1, players[player].y, map_boulder);
+            if(get_new_state(player, button) == PUSHR)
+                players[player].state = PUSHR;
+            else
+                players[player].state = IDLE;
+            break;
+
         default:
             players[player].state = IDLE;
             break;
@@ -692,6 +733,8 @@ void draw_walls(void)
     for(unsigned char x = 0; x < 40; x++)
         for(unsigned char y = 0; y < 28; y++)
                SetTile(x, y, scene[x][y].adv.extra);
+    for(unsigned char b = 0; b < boulders_cnt; ++b)
+        DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
 }
 
 /**
@@ -699,9 +742,11 @@ void draw_walls(void)
  */
 void redraw(void)
 {
+    /*
     // boulders
     for(unsigned char b = 0; b < boulders_cnt; ++b)
         DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
+    */
 
     // levers ...
     /*
