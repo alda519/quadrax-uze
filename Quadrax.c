@@ -102,8 +102,8 @@ void level1(void)
     scene[24][19].block = WALL | 0x80;
     scene[25][17].block = WALL | 0x80;
     
-    players[0].x = 23;
-    players[0].y = 13 - 2;
+    players[0].x = 23     + 2;
+    players[0].y = 13 - 2 + 4;
     players[1].x = 10;
     players[1].y = 25 - 2;
     finish_x = 16;
@@ -335,8 +335,14 @@ char fall_player(unsigned char player)
 enum { IDLE,
 WALK_L_1, WALK_L_2, WALK_L_3, WALK_L_4,
 WALK_R_1, WALK_R_2, WALK_R_3, WALK_R_4,
-WALK_LU, WALK_LUU, WALK_LD, WALK_LDD, WALK_LDDD, PUSHL,
-WALK_R, WALK_RU, WALK_RUU, WALK_RD, WALK_RDD, WALK_RDDD, PUSHR,
+WALK_LU, WALK_LD,
+WALK_LUU, WALK_LUU_2, WALK_LUU_3, WALK_LUU_4,
+WALK_LDD, WALK_LDD_2, WALK_LDD_3, WALK_LDD_4,
+PUSHL,
+WALK_R, WALK_RU, WALK_RD,
+WALK_RUU, WALK_RUU_2, WALK_RUU_3, WALK_RUU_4,
+WALK_RDD, WALK_RDD_2, WALK_RDD_3, WALK_RDD_4,
+PUSHR,
 FALL_1, FALL_2, FALL_3, FALL_4, FALL_E,
 };
 
@@ -435,12 +441,8 @@ char get_new_state(unsigned char player, int buttons)
             }
             }
         }
-
     } /*else if(buttons & BTN_UP) {
-        players[player].y -= 1;
-
     } else if(buttons & BTN_DOWN) {
-        players[player].y += 1;
     }*/
     return IDLE;
 }
@@ -551,31 +553,127 @@ void move_player(unsigned char player, int button)
             players[player].state = IDLE;
             break;
 
-        // others
+        // climb up left
         case WALK_LUU:
             players[player].y -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr5);
+            players[player].state = WALK_LUU_2;
+            break;
+        case WALK_LUU_2:
+            SetTile(players[player].x, players[player].y+2, BLANK);
+            players[player].x -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr3);
+            DrawMap2(players[player].x+1, players[player].y+1, map_playerBlue_cr4);
+            players[player].state = WALK_LUU_3;
+            break;
+        case WALK_LUU_3:
+            SetTile(players[player].x+1, players[player].y+1, BLANK);
+            players[player].y -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr1);
+            DrawMap2(players[player].x, players[player].y+1, map_playerBlue_cr2);
+            players[player].state = WALK_LUU_4;
+            break;
+        case WALK_LUU_4:
+            SetTile(players[player].x+1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr6);
+            players[player].state = IDLE;
+            break;
+
+        // climb up right
+        case WALK_RUU:
+            players[player].y -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl5);
+            players[player].state = WALK_RUU_2;
+            break;
+        case WALK_RUU_2:
+            SetTile(players[player].x, players[player].y+2, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl3);
+            DrawMap2(players[player].x, players[player].y+1, map_playerBlue_cl4);
+            players[player].x += 1;
+            players[player].state = WALK_RUU_3;
+            break;
+        case WALK_RUU_3:
+            SetTile(players[player].x-1, players[player].y+1, BLANK);
+            players[player].y -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl1);
+            DrawMap2(players[player].x-1, players[player].y+1, map_playerBlue_cl2);
+            players[player].state = WALK_RUU_4;
+            break;
+        case WALK_RUU_4:
+            SetTile(players[player].x-1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl6);
+            players[player].state = IDLE;
+            break;
+
+        // TODO jumps
         case WALK_LU:
             players[player].x -= 1;
             players[player].y -= 1;
             players[player].state = IDLE;
             break;
-        case WALK_RUU:
-            players[player].y -= 1;
         case WALK_RU:
             players[player].x += 1;
             players[player].y -= 1;
             players[player].state = IDLE;
             break;
-        case WALK_LDDD:
-        case WALK_LDD:
         case WALK_LD:
             players[player].x -= 1;
             players[player].state = IDLE;
             break;
-        case WALK_RDDD:
-        case WALK_RDD:
         case WALK_RD:
             players[player].x += 1;
+            players[player].state = IDLE;
+            break;
+
+        // climb left down
+        case WALK_LDD:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl1);
+            DrawMap2(players[player].x-1, players[player].y+1, map_playerBlue_cl2);
+            players[player].state = WALK_LDD_2;
+            break;
+        case WALK_LDD_2:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].x -= 1;
+            players[player].y += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl3);
+            DrawMap2(players[player].x, players[player].y+1, map_playerBlue_cl4);
+            players[player].state = WALK_LDD_3;
+            break;
+        case WALK_LDD_3:
+            SetTile(players[player].x+1, players[player].y, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl5);
+            players[player].state = WALK_LDD_4;
+            break;
+        case WALK_LDD_4:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].y += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cl6);
+            players[player].state = IDLE;
+            break;
+
+        // climb right down
+        case WALK_RDD:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr1);
+            DrawMap2(players[player].x, players[player].y+1, map_playerBlue_cr2);
+            players[player].state = WALK_RDD_2;
+            break;
+        case WALK_RDD_2:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].x += 1;
+            players[player].y += 1;
+            DrawMap2(players[player].x-1, players[player].y, map_playerBlue_cr3);
+            DrawMap2(players[player].x, players[player].y+1, map_playerBlue_cr4);
+            players[player].state = WALK_RDD_3;
+            break;
+        case WALK_RDD_3:
+            SetTile(players[player].x-1, players[player].y, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr5);
+            players[player].state = WALK_RDD_4;
+            break;
+        case WALK_RDD_4:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].y += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_cr6);
             players[player].state = IDLE;
             break;
 
@@ -640,7 +738,7 @@ int play_level(unsigned char level)
         boulders_fall();
 
         redraw();
-        WaitVsync(6);
+        WaitVsync(8);
 
         // player 0 can reset game
         if(buttons & BTN_START)
