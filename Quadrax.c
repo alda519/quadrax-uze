@@ -479,10 +479,7 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x, players[player].y+1, BLANK);
             players[player].x += 1;
             DrawMap2(players[player].x, players[player].y, map(player,_m2r));
-            if(get_new_state(player, button) == WALK_R_1)
-                players[player].state = WALK_R_3;
-            else
-                players[player].state = IDLE;
+            players[player].state = get_new_state(player, button);
             break;
         case WALK_R_3:
             DrawMap2(players[player].x, players[player].y, map(player,_m3r));
@@ -493,10 +490,7 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x, players[player].y+1, BLANK);
             players[player].x += 1;
             DrawMap2(players[player].x, players[player].y, map(player,_m2r));
-            if(get_new_state(player, button) == WALK_R_1)
-                players[player].state = WALK_R_1;
-            else
-                players[player].state = IDLE;
+            players[player].state = get_new_state(player, button);
             break;
 
         // walking left animation
@@ -509,10 +503,7 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x+1, players[player].y, BLANK);
             SetTile(players[player].x+1, players[player].y+1, BLANK);
             DrawMap2(players[player].x, players[player].y, map(player,_m2l));
-            if(get_new_state(player, button) == WALK_L_1)
-                players[player].state = WALK_L_3;
-            else
-                players[player].state = IDLE;
+            players[player].state = get_new_state(player, button);
             break;
         case WALK_L_3:
             players[player].x -= 1;
@@ -523,10 +514,7 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x+1, players[player].y, BLANK);
             SetTile(players[player].x+1, players[player].y+1, BLANK);
             DrawMap2(players[player].x, players[player].y, map(player,_m2l));
-            if(get_new_state(player, button) == WALK_L_1)
-                players[player].state = WALK_L_1;
-            else
-                players[player].state = IDLE;
+            players[player].state = get_new_state(player, button);
             break;
 
         // falling animation
