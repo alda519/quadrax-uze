@@ -206,6 +206,8 @@ void boulders_fall(void) {
             scene[boulders[b].x][boulders[b].y+2].adv.type = SOLID;
             scene[boulders[b].x+1][boulders[b].y+2].adv.type = SOLID;
             boulders[b].y += 1;
+            // TODO: animate
+            DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
             boulders[b].fall = 1;
         } else {
             boulders[b].fall = 0;
@@ -332,8 +334,6 @@ char fall_player(unsigned char player)
 
 void push_boulder(unsigned char x, unsigned char y, signed char dir)
 {
-    unsigned char b = find_boulder(x, y);
-    boulders[b-1].x += dir;
     if(dir == -1) {
         scene[x+1][y].adv.type = FREE;
         scene[x+1][y+1].adv.type = FREE;
@@ -695,7 +695,8 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x+1, players[player].y+1, BLANK);
             DrawMap2(players[player].x, players[player].y, map_playerBlue_pl1);
             DrawMap2(players[player].x-2, players[player].y, map_boulder);
-            if(get_new_state(player, button) == PUSHL)
+            boulders[find_boulder(players[player].x-1, players[player].y)-1].x -= 1;
+            if(get_new_state(player, button) == PUSHL && !FREE_BLOCK(players[player].x-1, players[player].y+2))
                 players[player].state = PUSHL;
             else
                 players[player].state = IDLE;
@@ -712,7 +713,8 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x-1, players[player].y+1, BLANK);
             DrawMap2(players[player].x, players[player].y, map_playerBlue_pr1);
             DrawMap2(players[player].x+1, players[player].y, map_boulder);
-            if(get_new_state(player, button) == PUSHR)
+            boulders[find_boulder(players[player].x, players[player].y)-1].x += 1;
+            if(get_new_state(player, button) == PUSHR && !FREE_BLOCK(players[player].x+1, players[player].y+2))
                 players[player].state = PUSHR;
             else
                 players[player].state = IDLE;
@@ -730,11 +732,15 @@ void move_player(unsigned char player, int button)
  */
 void draw_walls(void)
 {
+    // wals
     for(unsigned char x = 0; x < 40; x++)
         for(unsigned char y = 0; y < 28; y++)
                SetTile(x, y, scene[x][y].adv.extra);
+    // boulders
     for(unsigned char b = 0; b < boulders_cnt; ++b)
         DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
+    // finish
+    DrawMap2(finish_x, finish_y, map_finish);
 }
 
 /**
@@ -742,12 +748,6 @@ void draw_walls(void)
  */
 void redraw(void)
 {
-    /*
-    // boulders
-    for(unsigned char b = 0; b < boulders_cnt; ++b)
-        DrawMap2(boulders[b].x, boulders[b].y, map_boulder);
-    */
-
     // levers ...
     /*
     SetTile(23,26, SWITCH1_ON);
@@ -756,8 +756,6 @@ void redraw(void)
     SetTile(18,25, SWITCH2_OFF);
     */
 
-    // finish
-    DrawMap2(finish_x, finish_y, map_finish);
     // lifts ..
 }
 
