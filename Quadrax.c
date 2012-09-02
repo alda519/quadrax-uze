@@ -41,6 +41,7 @@ enum { GAME_NEXTLEVEL, GAME_RESET, GAME_END, };
 typedef struct {
     unsigned char x, y;
     char walk, fall;
+    char state;
 } player_t;
 
 // array contains both players parameters
@@ -102,9 +103,9 @@ void level1(void)
     scene[25][17].block = WALL | 0x80;
     
     players[0].x = 23;
-    players[0].y = 13;
+    players[0].y = 13 - 2;
     players[1].x = 10;
-    players[1].y = 25;
+    players[1].y = 25 - 2;
     finish_x = 16;
     finish_y = 21;
     scene[finish_x][finish_y].block = WALL | 0x80;
@@ -311,65 +312,87 @@ void load_level(unsigned char level)
 }
 
 
+
 /**
- * Moves given player according to pressed buttons and terrain
+ * If player does not stand on ground, he falls
  */
-void move_player(unsigned char player, int buttons)
+char fall_player(unsigned char player)
 {
-    // players cannot move while falling
-    if(players[player].fall)
-        return;
+    if(scene[players[player].x][players[player].y+2].adv.type == 0) {
+        players[player].fall += 1;
+        return 1;
+    } else {
+        if(players[player].fall > 3)
+            dead = 1;
+        // reset counter on ground
+        players[player].fall = 0;
+        return 0;
+    }
+}
+
+
+// finite state machine states
+enum { IDLE,
+WALK_L_1, WALK_L_2, WALK_L_3, WALK_L_4,
+WALK_R_1, WALK_R_2, WALK_R_3, WALK_R_4,
+WALK_LU, WALK_LUU, WALK_LD, WALK_LDD, WALK_LDDD, PUSHL,
+WALK_R, WALK_RU, WALK_RUU, WALK_RD, WALK_RDD, WALK_RDDD, PUSHR,
+FALL_1, FALL_2, FALL_3, FALL_4, FALL_E,
+};
+
+
+/**
+ * returns what direction should player move
+ */
+char get_new_state(unsigned char player, int buttons)
+{
+    if(fall_player(player))
+        return FALL_1;
 
     unsigned char x = players[player].x;
     unsigned char y = players[player].y;
     if((buttons & (BTN_LEFT | BTN_UP)) == (BTN_LEFT | BTN_UP)) {
         // climbs up left
         if(FREE_BLOCK(x-1,y-1) && FREE_BLOCK(x-1, y-2) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y)) {
-            players[player].x -= 1;
-            players[player].y -= 2;
+            return WALK_LUU;
         } else {
             // if it is not possible to climb, then try move left
-            move_player(player, BTN_LEFT);
+            return get_new_state(player, BTN_LEFT);
         }
 
     } else if((buttons & (BTN_LEFT | BTN_DOWN)) == (BTN_LEFT | BTN_DOWN)) {
         // climbs down left
         if(FREE_BLOCK(x-1, y+1) && FREE_BLOCK(x-1, y+2) && FREE_BLOCK(x-1, y+3) && ! FREE_BLOCK(x-1, y+4)) {
-            players[player].x -= 1;
-            players[player].y += 2;
+            return WALK_LDD;
         } else {
             // if he cannost climb down, then try it left
-            move_player(player, BTN_LEFT);
+            return get_new_state(player, BTN_LEFT);
         }
 
     } else if((buttons & (BTN_RIGHT | BTN_UP)) == (BTN_RIGHT | BTN_UP)) {
         // climbs up right
         if(FREE_BLOCK(x+1,y-1) && FREE_BLOCK(x+1, y-2) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y)) {
-            players[player].x += 1;
-            players[player].y -= 2;
+            return WALK_RUU;
         } else { // pokud to nejde nahoru, tak zkusi jit aspon jen vpravo
-            move_player(player, BTN_RIGHT);
+            return get_new_state(player, BTN_RIGHT);
         }
 
     } else if((buttons & (BTN_RIGHT | BTN_DOWN)) == (BTN_RIGHT | BTN_DOWN)) {
         // climbs down right
         if(FREE_BLOCK(x+1, y+1) && FREE_BLOCK(x+1, y+2) && FREE_BLOCK(x+1, y+3) && ! FREE_BLOCK(x+1, y+4)) {
-            players[player].x += 1;
-            players[player].y += 2;
+            return WALK_RDD;
         } else {
             // if he cannost climb down, then try it right
-            move_player(player, BTN_RIGHT);
+            return get_new_state(player, BTN_RIGHT);
         }
 
     } else if(buttons & BTN_LEFT) {
         if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && FREE_BLOCK(x-1,y+2) && !FREE_BLOCK(x-1,y+3) && !falling_boulder(x-2,y+3)) {
-            players[player].x -= 1;
-            players[player].y += 1;
+            return WALK_LD;
         } else if(FREE_BLOCK(x-1,y) && FREE_BLOCK(x-1,y+1) && !(FREE_BLOCK(x-1,y+2) && FREE_BLOCK(x-1,y+3) && FREE_BLOCK(x-1, y+4) && FREE_BLOCK(x-1, y+5)) && !falling_boulder(x-2, y+2) && !falling_boulder(x-2, y+3) && !falling_boulder(x-2, y+4) && !falling_boulder(x-2, y+5))
-            players[player].x -= 1;
+            return WALK_L_1;
         else if(FREE_BLOCK(x-1, y) && FREE_BLOCK(x-1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x-1,y+1) && !falling_boulder(x-2, y+1)) {
-            players[player].x -= 1;
-            players[player].y -= 1;
+            return WALK_LU;
         } else if(FREE_BLOCK(x-3, y) && FREE_BLOCK(x-3, y+1)) {
             // the other player might block pushing boulder
             if(players[(player+1)%2].x == x-3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
@@ -390,14 +413,11 @@ void move_player(unsigned char player, int buttons)
 
     } else if(buttons & BTN_RIGHT) {
         if(FREE_BLOCK(x+1,y) && FREE_BLOCK(x+1,y+1) && FREE_BLOCK(x+1,y+2) && !FREE_BLOCK(x+1,y+3) && !falling_boulder(x+1,y+3)) {
-            players[player].x += 1;
-            players[player].y += 1;
+            return WALK_RD;
         } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y+1) && !(FREE_BLOCK(x+1,y+2) && FREE_BLOCK(x+1,y+3) && FREE_BLOCK(x+1, y+4) && FREE_BLOCK(x+1, y+5)) && !falling_boulder(x+1, y+2) && !falling_boulder(x+1, y+3) && !falling_boulder(x+1, y+4) && !falling_boulder(x+1, y+5)) {
-            players[player].x += 1;
-            players[player].walk += 1;
+            return WALK_R_1;
         } else if(FREE_BLOCK(x+1, y) && FREE_BLOCK(x+1, y-1) && FREE_BLOCK(x, y-1) && !FREE_BLOCK(x+1,y+1) && !falling_boulder(x+1, y+1)) {
-            players[player].x += 1;
-            players[player].y -= 1;
+            return WALK_RU;
         } else if(FREE_BLOCK(x+3, y) && FREE_BLOCK(x+3, y+1)) {
             // the other player might block pushing boulder
             if(players[(player+1)%2].x == x+3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
@@ -422,29 +442,146 @@ void move_player(unsigned char player, int buttons)
     } else if(buttons & BTN_DOWN) {
         players[player].y += 1;
     }*/
-    else {
-        players[player].walk = 0;
-        return; // hackity hack, no moving = no erasing
-    }
-    // erase players previous position
-    SetTile(x, y, BLANK);
-    SetTile(x, y+1, BLANK);
+    return IDLE;
 }
 
+
 /**
- * If player does not stand on ground, he falls
+ * Move players, renders animations
  */
-void fall_player(unsigned char player)
+void move_player(unsigned char player, int button)
 {
-    if(scene[players[player].x][players[player].y+2].adv.type == 0) {
-        SetTile(players[player].x, players[player].y, BLANK);
-        players[player].y += 1;
-        players[player].fall += 1;
-    } else {
-        if(players[player].fall > 3)
-            dead = 1;
-        // reset counter on ground
-        players[player].fall = 0;
+
+    switch(players[player].state) {
+        case IDLE:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue);
+            // change state according to situation and pressed buttons
+            players[player].state = get_new_state(player, button);
+            break;
+
+        // walking right animation
+        case WALK_R_1:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m1r);
+            players[player].state = WALK_R_2;
+            break;
+        case WALK_R_2:
+            SetTile(players[player].x, players[player].y, BLANK);
+            SetTile(players[player].x, players[player].y+1, BLANK);
+            players[player].x += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m2r);
+            if(get_new_state(player, button) == WALK_R_1)
+                players[player].state = WALK_R_3;
+            else
+                players[player].state = IDLE;
+            break;
+        case WALK_R_3:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m3r);
+            players[player].state = WALK_R_4;
+            break;
+        case WALK_R_4:
+            SetTile(players[player].x, players[player].y, BLANK);
+            SetTile(players[player].x, players[player].y+1, BLANK);
+            players[player].x += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m2r);
+            if(get_new_state(player, button) == WALK_R_1)
+                players[player].state = WALK_R_1;
+            else
+                players[player].state = IDLE;
+            break;
+
+        // walking left animation
+        case WALK_L_1:
+            players[player].x -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m1l);
+            players[player].state = WALK_L_2;
+            break;
+        case WALK_L_2:
+            SetTile(players[player].x+1, players[player].y, BLANK);
+            SetTile(players[player].x+1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m2l);
+            if(get_new_state(player, button) == WALK_L_1)
+                players[player].state = WALK_L_3;
+            else
+                players[player].state = IDLE;
+            break;
+        case WALK_L_3:
+            players[player].x -= 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m3l);
+            players[player].state = WALK_L_4;
+            break;
+        case WALK_L_4:
+            SetTile(players[player].x+1, players[player].y, BLANK);
+            SetTile(players[player].x+1, players[player].y+1, BLANK);
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_m2l);
+            if(get_new_state(player, button) == WALK_L_1)
+                players[player].state = WALK_L_1;
+            else
+                players[player].state = IDLE;
+            break;
+
+        // falling animation
+        case FALL_1:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_f4);
+            players[player].state = FALL_2;
+            break;
+        case FALL_2:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].y += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_f1);
+            if(fall_player(player))
+                players[player].state = FALL_3;
+            else
+                players[player].state = FALL_E;
+            break;
+        case FALL_3:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_f5);
+            players[player].state = FALL_4;
+            break;
+        case FALL_4:
+            SetTile(players[player].x, players[player].y, BLANK);
+            players[player].y += 1;
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_f2);
+            if(fall_player(player))
+                players[player].state = FALL_1;
+            else
+                players[player].state = FALL_E;
+            break;
+        case FALL_E:
+            DrawMap2(players[player].x, players[player].y, map_playerBlue_f3);
+            players[player].state = IDLE;
+            break;
+
+        // others
+        case WALK_LUU:
+            players[player].y -= 1;
+        case WALK_LU:
+            players[player].x -= 1;
+            players[player].y -= 1;
+            players[player].state = IDLE;
+            break;
+        case WALK_RUU:
+            players[player].y -= 1;
+        case WALK_RU:
+            players[player].x += 1;
+            players[player].y -= 1;
+            players[player].state = IDLE;
+            break;
+        case WALK_LDDD:
+        case WALK_LDD:
+        case WALK_LD:
+            players[player].x -= 1;
+            players[player].state = IDLE;
+            break;
+        case WALK_RDDD:
+        case WALK_RDD:
+        case WALK_RD:
+            players[player].x += 1;
+            players[player].state = IDLE;
+            break;
+
+        default:
+            players[player].state = IDLE;
+            break;
     }
 }
 
@@ -475,34 +612,7 @@ void redraw(void)
     SetTile(15,25, SWITCH2_ON);
     SetTile(18,25, SWITCH2_OFF);
     */
-    // players
-    if(players[0].walk > 4)
-        players[0].walk = 1;
 
-    switch(players[0].walk) {
-        case 0:
-            DrawMap2(players[0].x, players[0].y, map_playerBlue);
-            break;
-
-        case 1: // walk right
-            DrawMap2(players[0].x, players[0].y, map_playerBlue_m1r);
-            break;
-        case 2: // walk right
-            DrawMap2(players[0].x, players[0].y, map_playerBlue_m2r);
-            break;
-        case 3: // walk right
-            DrawMap2(players[0].x, players[0].y, map_playerBlue_m3r);
-            break;
-        case 4: // walk right
-            DrawMap2(players[0].x, players[0].y, map_playerBlue_m2r);
-            break;
-    }
-    if(players[0].fall) {
-        DrawMap2(players[0].x, players[0].y, map_playerBlue_f1);
-        DrawMap2(players[0].x, players[0].y, map_playerBlue_f1);
-    }
-
-    DrawMap2(players[1].x, players[1].y, map_playerRed);
     // finish
     DrawMap2(finish_x, finish_y, map_finish);
     // lifts ..
@@ -524,14 +634,13 @@ int play_level(unsigned char level)
         // for each player
         for(signed char player = 1; player >= 0; --player) {
             buttons = ReadJoypad(player);
-            fall_player(player^swap);
             move_player(player^swap, buttons);
         }
         // boulders are falling
         boulders_fall();
 
         redraw();
-        WaitVsync(3);
+        WaitVsync(6);
 
         // player 0 can reset game
         if(buttons & BTN_START)
