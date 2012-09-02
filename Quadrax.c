@@ -421,12 +421,8 @@ char get_new_state(unsigned char player, int buttons)
             // the other player might block pushing boulder
             if(players[(player+1)%2].x == x-3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
-            else {
-            unsigned char b = find_boulder(x-2, y);
-            // check boulder put on top of boulder
-            if(b && !find_boulder(x-3, y-2) && !find_boulder(x-2, y-2) && !find_boulder(x-1, y-2)) {
+            else if(find_boulder(x-2, y) && !find_boulder(x-3, y-2) && !find_boulder(x-2, y-2) && !find_boulder(x-1, y-2)) {
                 return PUSHL;
-            }
             }
         }
 
@@ -441,12 +437,8 @@ char get_new_state(unsigned char player, int buttons)
             // the other player might block pushing boulder
             if(players[(player+1)%2].x == x+3 && (players[(player+1)%2].y == y || players[(player+1)%2].y == y+1))
                 ;
-            else {
-            unsigned char b = find_boulder(x+1, y);
-            // check boulder put on top of boulder
-            if(b && !find_boulder(x, y-2) && !find_boulder(x+1, y-2) && !find_boulder(x+2, y-2)) {
+            else if(find_boulder(x+1, y) && !find_boulder(x, y-2) && !find_boulder(x+1, y-2) && !find_boulder(x+2, y-2)) {
                 return PUSHR;
-            }
             }
         }
     } /*else if(buttons & BTN_UP) {
