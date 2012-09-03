@@ -353,11 +353,11 @@ void push_boulder(unsigned char x, unsigned char y, signed char dir)
 enum { IDLE,
 WALK_L_1, WALK_L_2, WALK_L_3, WALK_L_4,
 WALK_R_1, WALK_R_2, WALK_R_3, WALK_R_4,
-WALK_LU, WALK_LD,
+WALK_LU, WALK_LU_1, WALK_LD,
 WALK_LUU, WALK_LUU_2, WALK_LUU_3, WALK_LUU_4,
 WALK_LDD, WALK_LDD_2, WALK_LDD_3, WALK_LDD_4,
 PUSHL, PUSHL_1,
-WALK_R, WALK_RU, WALK_RD,
+WALK_RU, WALK_RU_1, WALK_RD,
 WALK_RUU, WALK_RUU_2, WALK_RUU_3, WALK_RUU_4,
 WALK_RDD, WALK_RDD_2, WALK_RDD_3, WALK_RDD_4,
 PUSHR, PUSHR_1,
@@ -472,6 +472,8 @@ void move_player(unsigned char player, int button)
             players[player].x += 1;
             DrawMap2(players[player].x, players[player].y, map(player,_m2r));
             players[player].state = get_new_state(player, button);
+            if(players[player].state == WALK_R_1)
+                players[player].state = WALK_R_3;
             break;
         case WALK_R_3:
             DrawMap2(players[player].x, players[player].y, map(player,_m3r));
@@ -496,6 +498,8 @@ void move_player(unsigned char player, int button)
             SetTile(players[player].x+1, players[player].y+1, BLANK);
             DrawMap2(players[player].x, players[player].y, map(player,_m2l));
             players[player].state = get_new_state(player, button);
+            if(players[player].state == WALK_L_1)
+                players[player].state = WALK_L_3;
             break;
         case WALK_L_3:
             players[player].x -= 1;
@@ -549,6 +553,7 @@ void move_player(unsigned char player, int button)
             break;
         case WALK_LUU_2:
             SetTile(players[player].x, players[player].y+2, BLANK);
+        case WALK_LU_1: // hackity hack
             players[player].x -= 1;
             DrawMap2(players[player].x, players[player].y, map(player,_cr3));
             DrawMap2(players[player].x+1, players[player].y+1, map(player,_cr4));
@@ -575,6 +580,7 @@ void move_player(unsigned char player, int button)
             break;
         case WALK_RUU_2:
             SetTile(players[player].x, players[player].y+2, BLANK);
+        case WALK_RU_1: // hackity hack
             DrawMap2(players[player].x, players[player].y, map(player,_cl3));
             DrawMap2(players[player].x, players[player].y+1, map(player,_cl4));
             players[player].x += 1;
@@ -593,23 +599,26 @@ void move_player(unsigned char player, int button)
             players[player].state = IDLE;
             break;
 
-        // TODO jumps
         case WALK_LU:
-            players[player].x -= 1;
-            players[player].y -= 1;
-            players[player].state = IDLE;
+            DrawMap2(players[player].x, players[player].y, map(player,_sl));
+            players[player].state = WALK_LU_1;
             break;
         case WALK_RU:
-            players[player].x += 1;
-            players[player].y -= 1;
-            players[player].state = IDLE;
+            DrawMap2(players[player].x, players[player].y, map(player,_sr));
+            players[player].state = WALK_RU_1;
             break;
         case WALK_LD:
+            SetTile(players[player].x, players[player].y, BLANK);
+            SetTile(players[player].x, players[player].y+1, BLANK);
             players[player].x -= 1;
+            players[player].y += 1;
             players[player].state = IDLE;
             break;
         case WALK_RD:
+            SetTile(players[player].x, players[player].y, BLANK);
+            SetTile(players[player].x, players[player].y+1, BLANK);
             players[player].x += 1;
+            players[player].y += 1;
             players[player].state = IDLE;
             break;
 

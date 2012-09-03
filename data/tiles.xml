@@ -91,6 +91,13 @@
     <map var-name="map_playerRed_pr1" left="4" top="16" width="1" height="2"/>
     <map var-name="map_playerRed_pl1" left="5" top="16" width="1" height="2"/>
 
+    <!-- walking up stairs -->
+    <map var-name="map_playerBlue_sr" left="6" top="15" width="1" height="2"/>
+    <map var-name="map_playerBlue_sl" left="7" top="15" width="1" height="2"/>
+    <map var-name="map_playerRed_sr" left="8" top="15" width="1" height="2"/>
+    <map var-name="map_playerRed_sl" left="9" top="15" width="1" height="2"/>
+
+
     </maps>
     </output>
 </gfx-xform>
